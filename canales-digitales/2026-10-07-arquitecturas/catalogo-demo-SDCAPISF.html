@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo SDC API — TMX_CAT_PAQUETESINFINITUM</title>
+<style>
+  :root {
+    --blue: #00b0f0;
+    --blue-dark: #0080b0;
+    --blue-light: #e0f6ff;
+    --blue-mid: #b3e8fb;
+    --dark: #1a1a2e;
+    --gray: #f4f6f8;
+    --mid: #666;
+    --border: #dde3e8;
+    --green: #1a8a3c;
+    --green-bg: #e8f8ed;
+    --orange: #e67e22;
+    --orange-bg: #fef3e2;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(0,176,240,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #eef4f8; color: var(--dark); font-size: 14px; }
+
+  .header {
+    background: var(--dark);
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 14px;
+    border-bottom: 3px solid var(--blue);
+  }
+  .header-badge {
+    background: var(--blue); color: white;
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  }
+  .header-title { color: white; font-size: 15px; font-weight: 600; }
+  .header-sub { color: #8899aa; font-size: 11px; margin-top: 1px; }
+  .header-context {
+    margin-left: auto; font-size: 10px; color: #556677;
+    font-family: 'Courier New', monospace;
+    background: rgba(255,255,255,.05); padding: 4px 10px; border-radius: 6px;
+  }
+
+  .main { max-width: 1280px; margin: 0 auto; padding: 20px 16px; display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+  @media (max-width: 960px) { .main { grid-template-columns: 1fr; } }
+
+  .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-bottom: 18px; }
+  .section-label {
+    font-size: 11px; font-weight: 700; color: var(--mid); text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-label .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--blue); flex-shrink: 0;
+  }
+
+  /* OFFER CARDS */
+  .offers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .offer-card {
+    border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 14px; cursor: pointer; transition: all .15s; position: relative;
+    background: white;
+  }
+  .offer-card:hover { border-color: var(--blue-mid); }
+  .offer-card.selected { border-color: var(--blue); background: var(--blue-light); box-shadow: 0 0 0 3px rgba(0,176,240,.15); }
+  .offer-name { font-size: 14px; font-weight: 800; color: var(--dark); margin-bottom: 2px; }
+  .offer-speed {
+    font-size: 26px; font-weight: 900; color: var(--blue); line-height: 1;
+    margin: 6px 0 2px;
+  }
+  .offer-speed span { font-size: 12px; font-weight: 400; color: var(--mid); }
+  .offer-price { font-size: 20px; font-weight: 700; color: var(--dark); }
+  .offer-price span { font-size: 11px; font-weight: 400; color: var(--mid); }
+  .offer-code { font-size: 9px; color: #bbb; margin-top: 5px; font-family: monospace; }
+  .offer-billing-code {
+    margin-top: 6px; display: inline-block;
+    background: var(--orange-bg); color: var(--orange);
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    font-family: monospace;
+  }
+  .orderable-badge {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--green-bg); color: var(--green);
+    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 6px;
+  }
+  .offer-card.selected .orderable-badge { background: var(--blue); color: white; }
+
+  /* SERVICES INCLUDED */
+  .services-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .svc-chip {
+    background: var(--gray); color: var(--dark);
+    font-size: 11px; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--border);
+  }
+  .svc-chip.claro { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
+
+  /* API DETAIL PANEL */
+  .api-block {
+    background: #0d1117; border-radius: 8px;
+    padding: 14px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.8;
+    overflow-x: auto; margin-top: 10px;
+  }
+  .api-block .method-post { color: #ffa657; font-weight: 700; }
+  .api-block .method-get  { color: #79c0ff; font-weight: 700; }
+  .api-block .url  { color: #a5d6ff; }
+  .api-block .key  { color: #cae2ff; }
+  .api-block .val  { color: #a8ff78; }
+  .api-block .cmt  { color: #5c6370; font-style: italic; }
+  .api-block .num  { color: #ffab70; }
+  .api-block .brace { color: #e6edf3; }
+
+  /* PRICE RESULT */
+  .price-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .prf { background: var(--gray); border-radius: 8px; padding: 10px 12px; }
+  .prf-label { font-size: 10px; color: var(--mid); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 3px; }
+  .prf-value { font-size: 14px; font-weight: 700; color: var(--dark); }
+  .prf-value.price { font-size: 22px; color: var(--blue); }
+
+  /* BILLING CODE LINK */
+  .billing-link-box {
+    border: 2px solid var(--orange); border-radius: 8px;
+    padding: 12px 14px; margin-top: 12px; background: var(--orange-bg);
+  }
+  .billing-link-title { font-size: 11px; font-weight: 700; color: var(--orange); margin-bottom: 6px; text-transform: uppercase; }
+  .billing-link-value { font-family: monospace; font-size: 18px; font-weight: 900; color: var(--orange); }
+  .billing-link-sub { font-size: 11px; color: #a05000; margin-top: 4px; }
+
+  /* ATTRIBUTE VALUES LIST */
+  .att-values-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 5px; margin-top: 10px; max-height: 220px; overflow-y: auto;
+    padding-right: 4px;
+  }
+  .att-val {
+    font-family: monospace; font-size: 11px;
+    background: var(--gray); border: 1px solid var(--border);
+    padding: 4px 6px; border-radius: 5px; text-align: center; color: var(--mid);
+  }
+  .att-val.highlight { background: var(--blue-light); color: var(--blue-dark); border-color: var(--blue-mid); font-weight: 700; }
+  .att-val.v31match { background: #fff8e1; color: #c68000; border-color: #ffd54f; }
+
+  /* SUMMARY RIGHT */
+  .summary-offer-name { font-size: 20px; font-weight: 900; color: var(--dark); margin-bottom: 4px; }
+  .summary-price { font-size: 36px; font-weight: 900; color: var(--blue); }
+  .summary-price span { font-size: 13px; font-weight: 400; color: var(--mid); }
+  .summary-desc { font-size: 12px; color: var(--mid); margin-top: 8px; line-height: 1.5; }
+
+  .rest-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--dark); color: white;
+    padding: 6px 12px; border-radius: 6px; font-size: 11px; font-family: monospace;
+    margin-top: 10px; cursor: pointer; border: none; width: 100%;
+    transition: background .15s;
+  }
+  .rest-pill:hover { background: #2a2a4e; }
+  .rest-pill .method { background: var(--orange); padding: 1px 6px; border-radius: 4px; font-weight: 700; }
+  .rest-pill .method.get { background: var(--blue); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  .empty-state { color: #bbb; text-align: center; padding: 30px 0; font-size: 13px; }
+  .empty-state .icon { font-size: 28px; margin-bottom: 8px; }
+
+  /* CATALOG META */
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .meta-item { background: var(--gray); border-radius: 6px; padding: 8px 12px; }
+  .meta-item label { font-size: 10px; color: var(--mid); text-transform: uppercase; display: block; margin-bottom: 2px; }
+  .meta-item value { font-size: 12px; font-weight: 700; color: var(--dark); font-family: monospace; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--gray); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--blue-mid); border-radius: 10px; }
+
+  .tag {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px;
+  }
+  .tag.active { background: var(--green-bg); color: var(--green); }
+  .tag.orderable { background: var(--blue-light); color: var(--blue-dark); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(10,15,30,.65);
+    z-index: 1000; align-items: flex-start; justify-content: center;
+    padding: 24px 16px; overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 14px; width: 100%; max-width: 780px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35); overflow: hidden; position: relative;
+  }
+  .modal-header {
+    background: var(--dark); padding: 14px 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .modal-header .method-badge {
+    background: var(--blue); color: white; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 6px; font-family: monospace;
+  }
+  .modal-header .url-text { color: #a5d6ff; font-family: monospace; font-size: 12px; flex: 1; }
+  .modal-header .status-ok {
+    background: var(--green-bg); color: var(--green); font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 6px;
+  }
+  .modal-close {
+    background: none; border: none; color: #8899aa; cursor: pointer;
+    font-size: 18px; padding: 0 4px; line-height: 1;
+  }
+  .modal-close:hover { color: white; }
+  .modal-body { padding: 20px; }
+  .modal-section { margin-bottom: 18px; }
+  .modal-section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--mid); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .modal-section-title .badge-new {
+    background: #fde8c0; color: #c05000; font-size: 9px; font-weight: 700;
+    padding: 1px 7px; border-radius: 10px; text-transform: none;
+  }
+  .modal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .modal-field { background: var(--gray); border-radius: 7px; padding: 8px 12px; }
+  .modal-field label { font-size: 10px; color: var(--mid); display: block; margin-bottom: 2px; }
+  .modal-field value { font-size: 12px; font-weight: 700; color: var(--dark); font-family: monospace; word-break: break-all; }
+  .modal-field value.highlight { color: var(--orange); }
+  .modal-field value.green { color: var(--green); }
+  .attr-row {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px; margin-top: 8px;
+  }
+  .attr-chip {
+    background: var(--gray); border-radius: 6px; padding: 5px 9px;
+    font-size: 11px; color: var(--mid); border: 1px solid var(--border);
+  }
+  .attr-chip strong { display: block; font-size: 10px; color: #999; font-weight: 400; margin-bottom: 1px; }
+  .attr-chip.bool-true { background: var(--green-bg); color: var(--green); border-color: #b8e8c8; }
+  .attr-chip.bool-false { background: var(--orange-bg); color: var(--orange); border-color: #ffd0a0; }
+  .user-value-box {
+    background: var(--blue-light); border: 2px solid var(--blue); border-radius: 8px;
+    padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; gap: 12px;
+  }
+  .user-value-big { font-size: 24px; font-weight: 900; color: var(--blue); font-family: monospace; }
+  .user-value-sub { font-size: 12px; color: var(--blue-dark); }
+  .values-mini { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; max-height: 120px; overflow-y: auto; }
+  .values-mini span {
+    font-family: monospace; font-size: 10px; padding: 2px 6px;
+    background: var(--gray); border: 1px solid var(--border); border-radius: 4px; color: var(--mid);
+  }
+  .values-mini span.selected { background: var(--blue); color: white; border-color: var(--blue); }
+  .context-note {
+    background: #fff8f0; border-left: 3px solid var(--orange); border-radius: 6px;
+    padding: 8px 12px; font-size: 12px; color: #8a4800; margin-top: 8px;
+  }
+  .raw-toggle { cursor: pointer; font-size: 11px; color: var(--blue); margin-top: 12px; display: inline-block; }
+  .raw-json { display: none; margin-top: 8px; }
+  .raw-json.open { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">SDC API</div>
+  <div>
+    <div class="header-title">TMX_CAT_PAQUETESINFINITUM</div>
+    <div class="header-sub">Salesforce Standard Digital Commerce — vlocity_cmt / Communications Cloud</div>
+  </div>
+  <div class="header-context">contextKey: 99914b932bd37a50b983c5e7c90ae93b</div>
+</div>
+
+<div class="main">
+  <!-- LEFT -->
+  <div>
+
+    <!-- META -->
+    <div class="card">
+      <div class="section-label"><span class="dot"></span>Metadatos del catálogo</div>
+      <div class="meta-grid">
+        <div class="meta-item"><label>Catálogo ID</label><value>TMX_CAT_PAQUETESINFINITUM</value></div>
+        <div class="meta-item"><label>Endpoint base</label><value>v3/catalogs/</value></div>
+        <div class="meta-item"><label>Tipo de oferta</label><value>Product (Offer)</value></div>
+        <div class="meta-item"><label>Atributo clave</label><value>ATT_CODIGO_FACTURACION</value></div>
+      </div>
+    </div>
+
+    <!-- OFFERS -->
+    <div class="card">
+      <div class="section-label"><span class="dot"></span>Ofertas activas — <span style="color:var(--blue);font-style:normal">6 encontradas</span></div>
+      <div class="offers-grid" id="offersGrid"></div>
+    </div>
+
+    <!-- PRICE RESULT -->
+    <div class="card" id="priceCard" style="display:none">
+      <div class="section-label"><span class="dot"></span>priceResult — estructura de precio</div>
+      <div class="price-result-grid" id="priceResultGrid"></div>
+    </div>
+
+    <!-- ADD TO CART API CALL -->
+    <div class="card" id="apiCard" style="display:none">
+      <div class="section-label"><span class="dot"></span>addtocart — llamada REST simulada</div>
+      <div class="api-block" id="addToCartBlock"></div>
+      <div class="section-label" style="margin-top:16px"><span class="dot"></span>offerDetailsAction — obtener detalle</div>
+      <div class="api-block" id="offerDetailBlock"></div>
+    </div>
+
+    <!-- BILLING CODE CONNECTION -->
+    <div class="card" id="billingCard" style="display:none">
+      <div class="section-label"><span class="dot"></span>ATT_CODIGO_FACTURACION — conexión con sistema de facturación</div>
+      <div id="billingCodeContent"></div>
+
+      <div style="margin-top:16px">
+        <div class="section-label" style="margin-bottom:8px"><span class="dot"></span>
+          Picklist completa — <span style="color:var(--blue);font-style:normal" id="valuesCount"></span> valores disponibles
+          <span style="margin-left:6px;font-size:10px;font-weight:400;color:#999">(naranja = default de esta oferta · azul = código de facturación en v31)</span>
+        </div>
+        <div class="att-values-grid" id="valuesGrid"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: DETAIL PANEL -->
+  <div>
+    <div class="card" id="detailPanel">
+      <div class="empty-state">
+        <div class="icon">📦</div>
+        Selecciona una oferta para ver su detalle completo
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA (del JSON SDC API) ============
+const catalogData = {
+  contextKey: "99914b932bd37a50b983c5e7c90ae93b",
+  catalog: "TMX_CAT_PAQUETESINFINITUM",
+  offers: [
+    {
+      productCode: "OFF_TMX_INFINITUM_399",
+      name: "Infinitum 399",
+      description: "Infinitum 399,  tarifa $399 al mes, Hasta 300 Megas de Velocidad simetrica por promoción, (300 megas de subida y de bajada), Incluye:Claro Video, 100 GB de Claro Drive, Antivirus McAfee, Infinitum Mail",
+      price: 399,
+      displayText: "399 MXN Mensuales c/Impuestos",
+      speed: 300,
+      cloudDrive: "100 GB",
+      isOrderable: true,
+      isActive: true,
+      billingCode: "PFR34",
+      basketAction: "AddWithNoConfig",
+      addToCartLink: "v3/catalogs/TMX_CAT_PAQUETESINFINITUM/basket",
+      detailLink: "/v3/catalogs/TMX_CAT_PAQUETESINFINITUM/offers/OFF_TMX_INFINITUM_399",
+      sellingStart: "2024-12-01"
+    },
+    {
+      productCode: "OFF_TMX_INFINITUM_449",
+      name: "Infinitum 449",
+      description: "Infinitum 449, $449 al mes, Hasta 400 Megas. Incluye:Claro Video,200 GB de Claro Drive, Antivirus McAfee, Infinitum Mail",
+      price: 449,
+      displayText: "449 MXN Mensuales c/Impuestos",
+      speed: 400,
+      cloudDrive: "200 GB",
+      isOrderable: true,
+      isActive: true,
+      billingCode: "PFRA5",
+      basketAction: "AddWithNoConfig",
+      addToCartLink: "v3/catalogs/TMX_CAT_PAQUETESINFINITUM/basket",
+      detailLink: "/v3/catalogs/TMX_CAT_PAQUETESINFINITUM/offers/OFF_TMX_INFINITUM_449",
+      sellingStart: "2024-12-01"
+    },
+    {
+      productCode: "OFF_TMX_INFINITUM_499",
+      name: "Infinitum 499",
+      description: "Infinitum 499,  tarifa $499 al mes, Hasta 500 Megas. Incluye:Claro Video, 200 GB de Claro Drive, Antivirus McAfee, Infinitum Mail",
+      price: 499,
+      displayText: "499 MXN Mensuales c/Impuestos",
+      speed: 500,
+      cloudDrive: "200 GB",
+      isOrderable: true,
+      isActive: true,
+      billingCode: "PFRA7",
+      basketAction: "AddWithNoConfig",
+      addToCartLink: "v3/catalogs/TMX_CAT_PAQUETESINFINITUM/basket",
+      detailLink: "/v3/catalogs/TMX_CAT_PAQUETESINFINITUM/offers/OFF_TMX_INFINITUM_499",
+      sellingStart: "2024-12-01"
+    },
+    {
+      productCode: "OFF_TMX_INFINITUM_549",
+      name: "Infinitum 549",
+      description: "Infinitum 549, tarifa $549 al mes, Hasta 600 Megas de Velocidad, Incluye:Claro Video, 200 GB de Claro Drive, Antivirus McAfee, Infinitum Mail",
+      price: 549,
+      displayText: "549 MXN Mensuales c/Impuestos",
+      speed: 600,
+      cloudDrive: "200 GB",
+      isOrderable: true,
+      isActive: true,
+      billingCode: "PFR18",
+      basketAction: "AddWithNoConfig",
+      addToCartLink: "v3/catalogs/TMX_CAT_PAQUETESINFINITUM/basket",
+      detailLink: "/v3/catalogs/TMX_CAT_PAQUETESINFINITUM/offers/OFF_TMX_INFINITUM_549",
+      sellingStart: "2024-12-01"
+    },
+    {
+      productCode: "OFF_TMX_INFINITUM_649",
+      name: "Infinitum 649",
+      description: "Infinitum 649, tarifa $649 al mes, Hasta 800 Megas. Incluye:Claro Video, 200 GB de Claro Drive,  Antivirus McAfee, Infinitum Mail",
+      price: 649,
+      displayText: "649 MXN Mensuales c/Impuestos",
+      speed: 800,
+      cloudDrive: "200 GB",
+      isOrderable: true,
+      isActive: true,
+      billingCode: "PFRA8",
+      basketAction: "AddWithNoConfig",
+      addToCartLink: "v3/catalogs/TMX_CAT_PAQUETESINFINITUM/basket",
+      detailLink: "/v3/catalogs/TMX_CAT_PAQUETESINFINITUM/offers/OFF_TMX_INFINITUM_649",
+      sellingStart: "2024-12-01"
+    },
+    {
+      productCode: "OFF_TMX_INFINITUM_899",
+      name: "Infinitum 899",
+      description: "Infinitum 899, tarifa $899 al mes, Hasta 1 Gbps, Incluye:Claro Video , 400 GB de Claro Drive, Antivirus McAfee, Infinitum Mail",
+      price: 899,
+      displayText: "899 MXN Mensuales c/Impuestos",
+      speed: 1000,
+      cloudDrive: "400 GB",
+      isOrderable: true,
+      isActive: true,
+      billingCode: "PFR56",
+      basketAction: "AddWithNoConfig",
+      addToCartLink: "v3/catalogs/TMX_CAT_PAQUETESINFINITUM/basket",
+      detailLink: "/v3/catalogs/TMX_CAT_PAQUETESINFINITUM/offers/OFF_TMX_INFINITUM_899",
+      sellingStart: "2024-12-01"
+    }
+  ]
+}
+
+// Picklist de ATT_CODIGO_FACTURACION (igual para todas las ofertas — valores del JSON)
+const billingCodeValues = [
+  "NFX02","NFX03","NFX07","NFX10","DISPR","DISST","AMABN","MAXCA","HBOMP","F1001",
+  "MVS81","MVS85","APLTV","STV02","STV03","STV11","STV07","STV04","STV08","STV09",
+  "STV10","RTACL","PQI53","INF19","PQI43","PQI42","SDBVZ","PQI32","PQI64","PQI70",
+  "PQI25","PQI62","PQI40","PQI22","PFR26","PFR33","PFR39","PFR34","PFRA5","PFRA7",
+  "PFR56","PFRA8","PFR18","SVAI2","LAP01","LAP03","LAP04","TRD1B","TRD2B","TRD3B",
+  "TRDR2","INFMA","PFR24"
+]
+
+// Códigos que aparecen en el script v31 (matrizPaquetes)
+const v31Codes = new Set([
+  "PQI22","PQI53","PQI40","PFR26","INF19","PQI42","PQI43","PQI32","PQI25",
+  "PFR39","PFR34","PFR18","PFR56","PFRA5","PQI64","PQI70","PFRA7","PFRA8",
+  "LINEA","PQI37","PQI35","PQI68","PQI33","PQI69","PQI26","PQI28","PQI29",
+  "PFR24","PFR14","PFR25","PFRA0","PFR17","PFRA9","PFR38"
+])
+
+// ============ STATE ============
+let selectedCode = null
+
+// ============ RENDER OFFERS ============
+function renderOffers() {
+  const grid = document.getElementById('offersGrid')
+  grid.innerHTML = catalogData.offers.map(o => {
+    const isSelected = selectedCode === o.productCode
+    const speedLabel = o.speed >= 1000 ? '1 Gbps' : o.speed + ' Mbps'
+    return `<div class="offer-card${isSelected ? ' selected' : ''}" onclick="selectOffer('${o.productCode}')">
+      <div class="orderable-badge">${isSelected ? '✓ Seleccionado' : '● Orderable'}</div>
+      <div class="offer-name">${o.name}</div>
+      <div class="offer-speed">${o.speed >= 1000 ? '1' : o.speed}<span> ${o.speed >= 1000 ? 'Gbps' : 'Mbps'}</span></div>
+      <div class="offer-price">$${o.price}<span>/mes</span></div>
+      <div class="offer-billing-code">${o.billingCode}</div>
+      <div class="offer-code">${o.productCode}</div>
+    </div>`
+  }).join('')
+}
+
+// ============ SELECT OFFER ============
+function selectOffer(code) {
+  selectedCode = code
+  const offer = catalogData.offers.find(o => o.productCode === code)
+  renderOffers()
+  renderDetail(offer)
+  renderPriceResult(offer)
+  renderApiCalls(offer)
+  renderBillingCode(offer)
+}
+
+// ============ RIGHT PANEL ============
+function renderDetail(offer) {
+  const panel = document.getElementById('detailPanel')
+  const svcs = ['Claro Video', offer.cloudDrive + ' Claro Drive', 'Antivirus McAfee', 'Infinitum Mail']
+  const svcsHtml = svcs.map(s =>
+    `<span class="svc-chip${s.includes('Claro') ? ' claro' : ''}">${s}</span>`
+  ).join('')
+
+  const speedLabel = offer.speed >= 1000 ? '1 Gbps' : offer.speed + ' Mbps'
+
+  panel.innerHTML = `
+    <div class="summary-offer-name">${offer.name}</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <span class="tag active">IsActive</span>
+      <span class="tag orderable">IsOrderable</span>
+      <span style="font-size:10px;color:var(--mid);padding:4px 0">Selling desde: ${offer.sellingStart}</span>
+    </div>
+    <div class="summary-price">$${offer.price}<span> MXN / mes</span></div>
+    <div style="font-size:12px;color:var(--mid);margin-top:4px">${offer.displayText}</div>
+
+    <hr class="divider">
+
+    <div class="section-label"><span class="dot"></span>Velocidad</div>
+    <div style="font-size:32px;font-weight:900;color:var(--blue)">${speedLabel}</div>
+    ${offer.speed === 300 ? '<div style="font-size:11px;color:var(--green);margin-top:2px">★ Velocidad simétrica (subida = bajada)</div>' : ''}
+
+    <hr class="divider">
+
+    <div class="section-label"><span class="dot"></span>Servicios incluidos</div>
+    <div class="services-list">${svcsHtml}</div>
+
+    <hr class="divider">
+
+    <div class="section-label"><span class="dot"></span>Acciones REST disponibles</div>
+    <button class="rest-pill" onclick="scrollToApi()">
+      <span class="method">POST</span>
+      <span>${offer.addToCartLink}</span>
+    </button>
+    <button class="rest-pill" style="margin-top:6px" onclick="showOfferDetail('${offer.productCode}')">
+      <span class="method get">GET</span>
+      <span>${offer.detailLink}</span>
+      ${offer.productCode === 'OFF_TMX_INFINITUM_399' ? '<span style="background:#1a8a3c;padding:1px 7px;border-radius:4px;font-size:10px;margin-left:auto">▶ Ver respuesta</span>' : '<span style="opacity:.5;font-size:10px;margin-left:auto">sin mock</span>'}
+    </button>
+
+    <hr class="divider">
+
+    <div class="section-label"><span class="dot"></span>ProductCode (Salesforce)</div>
+    <div style="font-family:monospace;font-size:13px;font-weight:700;color:var(--dark);background:var(--gray);padding:8px 12px;border-radius:6px;margin-top:4px">${offer.productCode}</div>
+
+    <div class="billing-link-box" style="margin-top:12px">
+      <div class="billing-link-title">ATT_CODIGO_FACTURACION (default)</div>
+      <div class="billing-link-value">${offer.billingCode}</div>
+      <div class="billing-link-sub">→ Mapeado en matrizPaquetes del script v31</div>
+    </div>
+  `
+}
+
+// ============ PRICE RESULT ============
+function renderPriceResult(offer) {
+  const card = document.getElementById('priceCard')
+  const grid = document.getElementById('priceResultGrid')
+  card.style.display = 'block'
+  grid.innerHTML = `
+    <div class="prf">
+      <div class="prf-label">chargeamount</div>
+      <div class="prf-value price">$${offer.price}</div>
+    </div>
+    <div class="prf">
+      <div class="prf-label">baseamount</div>
+      <div class="prf-value price">$${offer.price}</div>
+    </div>
+    <div class="prf">
+      <div class="prf-label">ChargeType__c</div>
+      <div class="prf-value">Recurring</div>
+    </div>
+    <div class="prf">
+      <div class="prf-label">RecurringFrequency__c</div>
+      <div class="prf-value">Monthly</div>
+    </div>
+    <div class="prf">
+      <div class="prf-label">SubType__c</div>
+      <div class="prf-value">Standard</div>
+    </div>
+    <div class="prf">
+      <div class="prf-label">IsBasePrice__c</div>
+      <div class="prf-value" style="color:var(--green)">true</div>
+    </div>
+    <div class="prf" style="grid-column:1/-1">
+      <div class="prf-label">DisplayText__c</div>
+      <div class="prf-value">${offer.displayText}</div>
+    </div>
+    <div class="prf" style="grid-column:1/-1">
+      <div class="prf-label">adjustments / overrides</div>
+      <div class="prf-value" style="color:var(--mid)">[ ] vacíos — precio de lista sin descuentos</div>
+    </div>
+  `
+}
+
+// ============ API CALLS ============
+function renderApiCalls(offer) {
+  const card = document.getElementById('apiCard')
+  card.style.display = 'block'
+
+  document.getElementById('addToCartBlock').innerHTML =
+`<span class="cmt">// Agregar al carrito — POST</span>
+<span class="method-post">POST</span> <span class="url">${offer.addToCartLink}</span>
+
+<span class="brace">{</span>
+  <span class="key">"basketAction"</span>: <span class="val">"${offer.basketAction}"</span>,
+  <span class="key">"offer"</span>:         <span class="val">"${offer.productCode}"</span>
+<span class="brace">}</span>
+
+<span class="cmt">// basketAction "AddWithNoConfig":</span>
+<span class="cmt">// → Agrega directamente, sin flujo de configuración adicional</span>`
+
+  const hasMock = offer.productCode === 'OFF_TMX_INFINITUM_399'
+  document.getElementById('offerDetailBlock').innerHTML =
+`<span class="cmt">// Obtener detalle completo de la oferta — GET</span>
+<span class="method-get">GET</span> <span class="url">${offer.detailLink}</span>
+
+<span class="cmt">// errorCode: "INVOKE-200" | error: "OK"</span>
+<span class="cmt">// result.offerDetails.offer → objeto completo con IDs, Quantity, lineNumber...</span>${hasMock ? `
+
+<span style="cursor:pointer;color:#00b0f0;text-decoration:underline" onclick="showOfferDetail('${offer.productCode}')">▶ Click para ver respuesta completa (mock disponible)</span>` : `
+
+<span class="cmt">// Mock no disponible para esta oferta en este demo</span>`}`
+}
+
+// ============ BILLING CODE ============
+function renderBillingCode(offer) {
+  const card = document.getElementById('billingCard')
+  card.style.display = 'block'
+
+  document.getElementById('billingCodeContent').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="prf">
+        <div class="prf-label">attributeuniquecode__c</div>
+        <div class="prf-value" style="font-family:monospace;font-size:12px">ATT_CODIGO_FACTURACION</div>
+      </div>
+      <div class="prf">
+        <div class="prf-label">value__c (default)</div>
+        <div class="prf-value" style="color:var(--orange);font-family:monospace">${offer.billingCode}</div>
+      </div>
+      <div class="prf">
+        <div class="prf-label">ishidden__c / isreadonly__c</div>
+        <div class="prf-value" style="color:var(--mid)">true / true</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--mid);margin-top:10px;padding:10px 12px;background:var(--gray);border-radius:8px;line-height:1.6">
+      <strong style="color:var(--dark)">¿Qué es este atributo?</strong><br>
+      Es el código que se envía al sistema de facturación legacy de Telmex al procesar la orden.
+      Está oculto para el usuario (<code>ishidden__c: true</code>) y no es editable (<code>isreadonly__c: true</code>).
+      El valor <strong>${offer.billingCode}</strong> aparece como entrada en <code>matrizPaquetes</code> del script v31.
+      La picklist completa (abajo) contiene todos los códigos posibles: paquetes, internet, entretenimiento y otros servicios.
+    </div>
+  `
+
+  document.getElementById('valuesCount').textContent = billingCodeValues.length + ' valores'
+
+  document.getElementById('valuesGrid').innerHTML = billingCodeValues.map(v => {
+    const isDefault = v === offer.billingCode
+    const isV31 = v31Codes.has(v)
+    let cls = isDefault ? 'highlight' : (isV31 ? 'v31match' : '')
+    return `<div class="att-val ${cls}" title="${isDefault ? 'Default de esta oferta' : isV31 ? 'En matrizPaquetes v31' : ''}">${v}</div>`
+  }).join('')
+}
+
+function scrollToApi() {
+  document.getElementById('apiCard').scrollIntoView({ behavior: 'smooth' })
+}
+
+// ============ OFFER DETAILS MOCK DATA ============
+const offerDetailsData = {
+  'OFF_TMX_INFINITUM_399': {
+    contextKey: "99914b932bd37a50b983c5e7c90ae93b",
+    errorCode: "INVOKE-200",
+    error: "OK",
+    offer: {
+      Name: "Infinitum 399",
+      ProductCode: "OFF_TMX_INFINITUM_399",
+      Id: "01tHp00000CwXCyIAN",
+      Product2Id: "01tHp00000CwXCyIAN",
+      PricebookEntryId: "01uHp00000TR5kZIAT",
+      GlobalGroupKey: "39f8bac4-5881-3591-1867-33b89a3cfa42",
+      Quantity: 1, minQuantity: 1, maxQuantity: 1,
+      groupMinQuantity: 0, groupMaxQuantity: 99999,
+      productHierarchyPath: "01tHp00000CwXCyIAN",
+      lineNumber: "0001",
+      IsActive: true,
+      IsOrderable: true,
+      SpecificationType: "Offer",
+      offerType: "Product",
+      SellingStart: "2024-12-01T18:00:00.000Z",
+      Description: "Infinitum 399,  tarifa $399 al mes, Hasta 300 Megas de Velocidad simetrica por promoción, (300 megas de subida y de bajada), Incluye:Claro Video, 100 GB de Claro Drive, Antivirus McAfee, Infinitum Mail",
+      addtocart: {
+        method: "POST",
+        link: "v3/catalogs/TMX_CAT_PAQUETESINFINITUM/basket",
+        params: { context: "{}", basketAction: "AddWithNoConfig", offer: "OFF_TMX_INFINITUM_399" }
+      },
+      priceResult: { chargeamount: 399, baseamount: 399, SubType: "Standard", ChargeType: "Recurring", Frequency: "Monthly", DisplayText: "399 MXN Mensuales c/Impuestos", adjustments: [], overrides: [] },
+      attribute: {
+        code: "ATT_CODIGO_FACTURACION",
+        label: "Código de facturación",
+        categoryName: "Atributos Básicos",
+        dataType: "text", inputType: "dropdown",
+        multiselect: false, cacheable: true, required: false,
+        readonly: true, disabled: true, hidden: true,
+        userValues: "PFR34",
+        defaultSelected: "PFR34",
+        valuesCount: 47
+      }
+    }
+  }
+}
+
+// ============ SHOW OFFER DETAIL MODAL ============
+function showOfferDetail(code) {
+  const data = offerDetailsData[code]
+  if (!data) {
+    alert('Mock de offerDetails no disponible para esta oferta en este demo.\nSolo OFF_TMX_INFINITUM_399 tiene respuesta simulada.')
+    return
+  }
+  const o = data.offer
+  const modal = document.getElementById('offerDetailModal')
+  document.getElementById('modalUrl').textContent = `/v3/catalogs/TMX_CAT_PAQUETESINFINITUM/offers/${code}`
+
+  document.getElementById('modalBody').innerHTML = `
+    <!-- RESPONSE META -->
+    <div class="modal-section">
+      <div class="modal-section-title">Envelope de respuesta</div>
+      <div class="modal-grid">
+        <div class="modal-field"><label>errorCode</label><value class="green">${data.errorCode}</value></div>
+        <div class="modal-field"><label>error</label><value class="green">${data.error}</value></div>
+        <div class="modal-field"><label>contextKey</label><value style="font-size:10px">${data.contextKey}</value></div>
+      </div>
+    </div>
+
+    <!-- NUEVOS CAMPOS vs /catalog -->
+    <div class="modal-section">
+      <div class="modal-section-title">
+        Campos exclusivos de offerDetails
+        <span class="badge-new">Nuevo vs /catalog listing</span>
+      </div>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Id (Product2)</label><value class="highlight">${o.Id}</value></div>
+        <div class="modal-field"><label>PricebookEntryId</label><value class="highlight">${o.PricebookEntryId}</value></div>
+        <div class="modal-field"><label>GlobalGroupKey__c</label><value style="font-size:10px">${o.GlobalGroupKey}</value></div>
+        <div class="modal-field"><label>lineNumber</label><value>${o.lineNumber}</value></div>
+        <div class="modal-field"><label>productHierarchyPath</label><value style="font-size:10px">${o.productHierarchyPath}</value></div>
+      </div>
+    </div>
+
+    <!-- QUANTITY -->
+    <div class="modal-section">
+      <div class="modal-section-title">
+        Restricciones de cantidad
+        <span class="badge-new">Nuevo vs /catalog listing</span>
+      </div>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Quantity</label><value>${o.Quantity}</value></div>
+        <div class="modal-field"><label>minQuantity</label><value>${o.minQuantity}</value></div>
+        <div class="modal-field"><label>maxQuantity</label><value>${o.maxQuantity}</value></div>
+        <div class="modal-field"><label>groupMinQuantity</label><value>${o.groupMinQuantity}</value></div>
+        <div class="modal-field"><label>groupMaxQuantity</label><value>${o.groupMaxQuantity}</value></div>
+      </div>
+      <div class="context-note" style="margin-top:8px">
+        <strong>Lo que significa:</strong> Esta oferta puede agregarse de 1 en 1, máximo 1 por línea.
+        El grupo puede tener hasta 99,999 instancias (sin límite real en carrito).
+      </div>
+    </div>
+
+    <!-- ADD TO CART (con context) -->
+    <div class="modal-section">
+      <div class="modal-section-title">
+        addtocart — parámetros completos
+        <span class="badge-new">context: "{}" agregado</span>
+      </div>
+      <div class="api-block">
+<span class="method-post">POST</span> <span class="url">${o.addtocart.link}</span>
+
+<span class="brace">{</span>
+  <span class="key">"context"</span>:      <span class="val">"${o.addtocart.params.context}"</span>,
+  <span class="key">"basketAction"</span>: <span class="val">"${o.addtocart.params.basketAction}"</span>,
+  <span class="key">"offer"</span>:        <span class="val">"${o.addtocart.params.offer}"</span>
+<span class="brace">}</span>
+      </div>
+      <div class="context-note">
+        <strong>context: "{}"</strong> — aparece solo en offerDetails, no en el listing del catálogo.
+        Puede usarse para pasar contexto de sesión o parámetros adicionales al basket.
+      </div>
+    </div>
+
+    <!-- ATTRIBUTE -->
+    <div class="modal-section">
+      <div class="modal-section-title">ATT_CODIGO_FACTURACION — estructura completa del atributo</div>
+      <div class="attr-row">
+        <div class="attr-chip"><strong>code</strong>${o.attribute.code}</div>
+        <div class="attr-chip"><strong>label</strong>${o.attribute.label}</div>
+        <div class="attr-chip"><strong>dataType</strong>${o.attribute.dataType}</div>
+        <div class="attr-chip"><strong>inputType</strong>${o.attribute.inputType}</div>
+        <div class="attr-chip bool-false"><strong>multiselect</strong>${o.attribute.multiselect}</div>
+        <div class="attr-chip bool-true"><strong>cacheable</strong>${o.attribute.cacheable}</div>
+        <div class="attr-chip bool-false"><strong>required</strong>${o.attribute.required}</div>
+        <div class="attr-chip bool-true"><strong>readonly</strong>${o.attribute.readonly}</div>
+        <div class="attr-chip bool-true"><strong>disabled</strong>${o.attribute.disabled}</div>
+        <div class="attr-chip bool-true"><strong>hidden</strong>${o.attribute.hidden}</div>
+      </div>
+
+      <div class="user-value-box">
+        <div>
+          <div style="font-size:10px;color:var(--blue-dark);margin-bottom:2px">userValues (valor activo)</div>
+          <div class="user-value-big">${o.attribute.userValues}</div>
+        </div>
+        <div style="flex:1">
+          <div class="user-value-sub">
+            <strong>defaultSelected: true</strong> para <code>${o.attribute.defaultSelected}</code> en el array <code>values[]</code><br>
+            Este es el código de facturación que se enviará al sistema legacy al confirmar la orden.<br>
+            <span style="color:var(--blue-dark);font-weight:600">PFR34 → aparece en matrizPaquetes del script v31 (internet, 300 Mbps, $399, hogar)</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;font-size:11px;color:var(--mid)">
+        Muestra de values[] — <strong>${o.attribute.valuesCount} entradas</strong> (mismo picklist global):
+      </div>
+      <div class="values-mini">
+        ${["NFX02","NFX03","NFX07","NFX10","DISPR","DISST","AMABN","MAXCA","HBOMP","F1001","MVS81","MVS85","APLTV","STV02","STV03","STV11","STV07","STV04","STV08","STV09","STV10","RTACL","PQI53","INF19","PQI43","PQI42","SDBVZ","PQI32","PQI64","PQI70","PQI25","PQI62","PQI40","PQI22","PFR26","PFR33","PFR39","PFR34","PFRA5","PFRA7","PFR56","PFRA8","PFR18","SVAI2","LAP01","LAP03","LAP04"]
+          .map(v => `<span class="${v === 'PFR34' ? 'selected' : ''}">${v}</span>`).join('')}
+      </div>
+    </div>
+
+    <!-- RAW JSON -->
+    <div class="modal-section">
+      <span class="raw-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.classList.contains('open')?'▼ Ocultar JSON crudo':'▶ Ver JSON crudo (fuente de verdad)'">▶ Ver JSON crudo (fuente de verdad)</span>
+      <div class="raw-json api-block" style="max-height:280px;overflow-y:auto;font-size:11px">
+<span class="brace">{</span>
+  <span class="key">"contextKey"</span>: <span class="val">"99914b932bd37a50b983c5e7c90ae93b"</span>,
+  <span class="key">"result"</span>: <span class="brace">{</span>
+    <span class="key">"offerDetails"</span>: <span class="brace">{</span>
+      <span class="key">"offer"</span>: <span class="brace">{</span>
+        <span class="key">"Name"</span>: <span class="val">"Infinitum 399"</span>,
+        <span class="key">"ProductCode"</span>: <span class="val">"OFF_TMX_INFINITUM_399"</span>,
+        <span class="key">"Id"</span>: <span class="val">"01tHp00000CwXCyIAN"</span>,
+        <span class="key">"Product2Id"</span>: <span class="val">"01tHp00000CwXCyIAN"</span>,
+        <span class="key">"PricebookEntryId"</span>: <span class="val">"01uHp00000TR5kZIAT"</span>,
+        <span class="key">"Quantity"</span>: <span class="num">1</span>,
+        <span class="key">"minQuantity"</span>: <span class="num">1</span>,
+        <span class="key">"maxQuantity"</span>: <span class="num">1</span>,
+        <span class="key">"groupMinQuantity"</span>: <span class="num">0</span>,
+        <span class="key">"groupMaxQuantity"</span>: <span class="num">99999</span>,
+        <span class="key">"lineNumber"</span>: <span class="val">"0001"</span>,
+        <span class="key">"vlocity_cmt__IsOrderable__c"</span>: <span class="num">true</span>,
+        <span class="key">"IsActive"</span>: <span class="num">true</span>,
+        <span class="key">"AttributeCategory"</span>: <span class="brace">{</span>
+          <span class="key">"totalSize"</span>: <span class="num">1</span>,
+          <span class="key">"records"</span>: [<span class="brace">{</span>
+            <span class="key">"Name"</span>: <span class="val">"Atributos Básicos"</span>,
+            <span class="key">"productAttributes"</span>: <span class="brace">{</span>
+              <span class="key">"records"</span>: [<span class="brace">{</span>
+                <span class="key">"code"</span>: <span class="val">"ATT_CODIGO_FACTURACION"</span>,
+                <span class="key">"readonly"</span>: <span class="num">true</span>, <span class="key">"hidden"</span>: <span class="num">true</span>, <span class="key">"disabled"</span>: <span class="num">true</span>,
+                <span class="key">"userValues"</span>: <span class="val">"PFR34"</span>,
+                <span class="key">"values"</span>: <span class="cmt">/* 47 entries, PFR34 defaultSelected:true */</span>
+              <span class="brace">}]</span>
+            <span class="brace">}</span>
+          <span class="brace">}]</span>
+        <span class="brace">}</span>
+      <span class="brace">}</span>
+    <span class="brace">}</span>
+  <span class="brace">}</span>,
+  <span class="key">"errorCode"</span>: <span class="val">"INVOKE-200"</span>,
+  <span class="key">"error"</span>: <span class="val">"OK"</span>
+<span class="brace">}</span>
+      </div>
+    </div>
+  `
+
+  modal.classList.add('open')
+  document.body.style.overflow = 'hidden'
+}
+
+function closeModal() {
+  document.getElementById('offerDetailModal').classList.remove('open')
+  document.body.style.overflow = ''
+}
+
+// ============ INIT ============
+renderOffers()
+// Pre-select first offer for demo
+selectOffer('OFF_TMX_INFINITUM_549')
+</script>
+
+<!-- MODAL offerDetails -->
+<div class="modal-overlay" id="offerDetailModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="method-badge">GET</span>
+      <span class="url-text" id="modalUrl"></span>
+      <span class="status-ok">200 OK</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+</body>
+</html>

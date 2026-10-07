@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo Telmex — Demo Interactivo (v31)</title>
+<style>
+  :root {
+    --telmex-red: #00b0f0;
+    --telmex-dark: #1a1a1a;
+    --telmex-gray: #f5f5f5;
+    --telmex-mid: #666;
+    --promo-green: #1a8a3c;
+    --promo-bg: #e8f8ed;
+    --selected-blue: #0057b8;
+    --border: #ddd;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f0f0; color: var(--telmex-dark); }
+
+  /* ---- HEADER ---- */
+  .header {
+    background: var(--telmex-red);
+    color: white;
+    padding: 16px 32px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header-logo { font-size: 26px; font-weight: 900; letter-spacing: -1px; }
+  .header-title { font-size: 14px; opacity: .85; }
+  .version-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+
+  /* ---- LAYOUT ---- */
+  .main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+  @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+
+  /* ---- CARDS ---- */
+  .card {
+    background: white; border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; color: var(--telmex-mid);
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .step-badge {
+    background: var(--telmex-red); color: white;
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; flex-shrink: 0;
+  }
+
+  /* ---- MERCADO TABS ---- */
+  .tabs { display: flex; gap: 8px; margin-bottom: 4px; }
+  .tab-btn {
+    padding: 10px 28px; border: 2px solid var(--border);
+    background: white; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 600; color: var(--telmex-mid);
+    transition: all .15s;
+  }
+  .tab-btn.active { border-color: var(--telmex-red); color: var(--telmex-red); background: #e8f7fd; }
+
+  /* ---- TIPO FILTER ---- */
+  .tipo-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tipo-btn {
+    padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: white; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--telmex-mid);
+    transition: all .15s;
+  }
+  .tipo-btn.active { background: var(--telmex-dark); color: white; border-color: var(--telmex-dark); }
+
+  /* ---- PAQUETES GRID ---- */
+  .paquetes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .pkg-card {
+    border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 14px 12px; cursor: pointer; transition: all .15s; position: relative;
+    background: white;
+  }
+  .pkg-card:hover { border-color: #aaa; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+  .pkg-card.selected { border-color: var(--telmex-red); background: #e8f7fd; box-shadow: 0 0 0 3px #b3e6f9; }
+  .pkg-card .tipo-tag {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 10px; margin-bottom: 8px; display: inline-block;
+  }
+  .tipo-tag.paquete { background: #e8f0fe; color: #1a73e8; }
+  .tipo-tag.internet { background: #e8f7fd; color: #0085b8; }
+  .tipo-tag.linea { background: #f3e8ff; color: #7b1fa2; }
+  .pkg-vel { font-size: 22px; font-weight: 900; color: var(--telmex-dark); line-height: 1; }
+  .pkg-vel-unit { font-size: 11px; font-weight: 400; color: var(--telmex-mid); }
+  .pkg-precio { font-size: 18px; font-weight: 700; color: var(--telmex-red); margin-top: 6px; }
+  .pkg-precio-sub { font-size: 10px; color: var(--telmex-mid); }
+  .pkg-clave { font-size: 9px; color: #bbb; margin-top: 4px; }
+  .pkg-selected-check {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--telmex-red); color: white;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: none; align-items: center; justify-content: center;
+    font-size: 10px;
+  }
+  .pkg-card.selected .pkg-selected-check { display: flex; }
+  .pkg-servicios { font-size: 10px; color: var(--telmex-mid); margin-top: 5px; }
+
+  /* ---- DOMICILIACION ---- */
+  .domiciliacion-toggle {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; border: 2px solid var(--border);
+    border-radius: var(--radius); cursor: pointer;
+    transition: all .15s; background: white;
+  }
+  .domiciliacion-toggle:hover { border-color: var(--promo-green); }
+  .domiciliacion-toggle.active { border-color: var(--promo-green); background: var(--promo-bg); }
+  .toggle-switch {
+    width: 42px; height: 24px; background: #ccc; border-radius: 12px;
+    position: relative; transition: background .2s; flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; border-radius: 50%; background: white;
+    transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  .domiciliacion-toggle.active .toggle-switch { background: var(--promo-green); }
+  .domiciliacion-toggle.active .toggle-switch::after { transform: translateX(18px); }
+  .domiciliacion-text { flex: 1; }
+  .domiciliacion-text strong { font-size: 14px; display: block; margin-bottom: 2px; }
+  .domiciliacion-text span { font-size: 12px; color: var(--telmex-mid); }
+  .domiciliacion-toggle.active .domiciliacion-text span { color: var(--promo-green); }
+
+  /* ---- ENTRETENIMIENTO ---- */
+  .ent-familia { margin-bottom: 16px; }
+  .ent-familia-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    font-size: 12px; font-weight: 700; color: var(--telmex-mid); text-transform: uppercase;
+  }
+  .ent-familia-header .pleca {
+    background: var(--promo-green); color: white;
+    font-size: 9px; padding: 2px 8px; border-radius: 10px;
+    font-weight: 600;
+  }
+  .ent-opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ent-card {
+    border: 2px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    cursor: pointer; transition: all .15s; min-width: 140px; position: relative;
+    background: white;
+  }
+  .ent-card:hover { border-color: #999; }
+  .ent-card.selected { border-color: var(--selected-blue); background: #f0f6ff; }
+  .ent-card.promo-active { border-color: var(--promo-green) !important; background: var(--promo-bg) !important; }
+  .ent-card .ent-detalle { font-size: 12px; font-weight: 700; color: var(--telmex-dark); }
+  .ent-card .ent-desc { font-size: 11px; color: var(--telmex-mid); margin-top: 1px; }
+  .ent-card .ent-precio { font-size: 16px; font-weight: 700; margin-top: 5px; }
+  .ent-card .ent-precio.gratis { color: var(--promo-green); }
+  .ent-card .ent-precio.normal { color: var(--telmex-red); }
+  .ent-card .precio-tachado { font-size: 11px; text-decoration: line-through; color: #aaa; }
+  .ent-card .promo-badge {
+    font-size: 9px; background: var(--promo-green); color: white;
+    padding: 2px 6px; border-radius: 10px; margin-top: 3px; display: inline-block;
+    font-weight: 600;
+  }
+
+  /* ---- RESUMEN ---- */
+  .resumen { position: sticky; top: 16px; }
+  .resumen-header {
+    font-size: 14px; font-weight: 700; color: var(--telmex-dark);
+    margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--telmex-red);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .resumen-line {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid #f0f0f0; gap: 8px;
+  }
+  .resumen-line:last-of-type { border-bottom: none; }
+  .resumen-line-name { font-size: 13px; color: var(--telmex-dark); flex: 1; }
+  .resumen-line-sub { font-size: 11px; color: var(--telmex-mid); margin-top: 1px; }
+  .resumen-line-price { font-size: 14px; font-weight: 700; color: var(--telmex-dark); white-space: nowrap; }
+  .resumen-line-price.gratis { color: var(--promo-green); }
+  .resumen-total {
+    margin-top: 12px; padding-top: 12px; border-top: 2px solid var(--telmex-dark);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .resumen-total-label { font-size: 13px; font-weight: 700; color: var(--telmex-mid); }
+  .resumen-total-price { font-size: 24px; font-weight: 900; color: var(--telmex-red); }
+  .resumen-empty { font-size: 13px; color: #bbb; text-align: center; padding: 20px 0; }
+  .promo-nota {
+    margin-top: 10px; padding: 10px 12px; background: var(--promo-bg);
+    border-radius: 8px; border-left: 3px solid var(--promo-green);
+    font-size: 12px; color: var(--promo-green); display: none;
+  }
+  .promo-nota.visible { display: block; }
+
+  /* ---- INFO BOX ---- */
+  .info-box {
+    background: #fffbea; border: 1px solid #f0c23a; border-radius: 8px;
+    padding: 12px 14px; margin-top: 16px; font-size: 12px; color: #7a5c00;
+  }
+  .info-box strong { display: block; margin-bottom: 4px; }
+
+  /* ---- CÓDIGO LOGIC ---- */
+  .logic-panel {
+    background: #1e1e2e; color: #a9b7c6; border-radius: var(--radius);
+    padding: 16px; font-family: 'Courier New', monospace; font-size: 12px;
+    line-height: 1.7; overflow-x: auto;
+  }
+  .logic-panel .kw { color: #cc99cd; }
+  .logic-panel .str { color: #7ec699; }
+  .logic-panel .num { color: #f08d49; }
+  .logic-panel .cmt { color: #5c6370; font-style: italic; }
+  .logic-panel .fn { color: #61afef; }
+  .logic-panel .var { color: #e5c07b; }
+
+  /* ---- SECTION TITLE ---- */
+  .section-explain {
+    font-size: 12px; color: var(--telmex-mid); margin-bottom: 12px;
+    padding: 8px 12px; background: #f9f9f9; border-radius: 6px; line-height: 1.5;
+  }
+
+  .no-disponible { opacity: .35; pointer-events: none; }
+  .no-disponible::after {
+    content: 'No disp.'; position: absolute; top: 6px; right: 6px;
+    font-size: 9px; background: #ccc; color: #666; padding: 1px 5px; border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">telmex</div>
+  <div class="header-title">Demo — Lógica de Catálogo y Promociones</div>
+  <div class="version-badge">Script v31</div>
+</div>
+
+<div class="main">
+  <!-- LEFT COLUMN -->
+  <div>
+
+    <!-- PASO 1: MERCADO -->
+    <div class="card">
+      <div class="card-title"><span class="step-badge">1</span> Seleccionar mercado</div>
+      <div class="section-explain">
+        La variable <code>familiasPorMercado</code> y <code>promocionesPorMercado</code> cambian según este valor.
+        Hogar ve todas las familias; Negocio solo Netflix y HBO.
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setMercado('hogar', this)">🏠 Hogar</button>
+        <button class="tab-btn" onclick="setMercado('negocio', this)">🏢 Negocio</button>
+      </div>
+    </div>
+
+    <!-- PASO 2: PAQUETE -->
+    <div class="card">
+      <div class="card-title"><span class="step-badge">2</span> Seleccionar paquete de internet</div>
+      <div class="section-explain">
+        <code>matrizPaquetes</code> filtrada por <code>mercado</code>. PQI25 está pre-seleccionado (1000 Mbps / $999).
+      </div>
+      <div class="tipo-filter" id="tipoFilter">
+        <button class="tipo-btn active" onclick="setTipo('todos', this)">Todos</button>
+        <button class="tipo-btn" onclick="setTipo('paquete', this)">Paquetes</button>
+        <button class="tipo-btn" onclick="setTipo('internet', this)">Internet solo</button>
+        <button class="tipo-btn" onclick="setTipo('linea', this)">Línea</button>
+      </div>
+      <div class="paquetes-grid" id="paquetesGrid"></div>
+    </div>
+
+    <!-- PASO 3: DOMICILIACION -->
+    <div class="card">
+      <div class="card-title"><span class="step-badge">3</span> Promoción por domiciliación</div>
+      <div class="section-explain">
+        Cuando está activo, los códigos <code>_P</code> reemplazan a los normales. NFX07 → NFX07_P ($0), MAXCA → MAXCA_P ($0).
+        Esto viene de <code>promocionesPorMercado[mercado].domiciliacion</code>.
+      </div>
+      <div class="domiciliacion-toggle" id="domToggle" onclick="toggleDomiciliacion()">
+        <div class="toggle-switch"></div>
+        <div class="domiciliacion-text">
+          <strong>Domiciliar mi pago</strong>
+          <span id="domSubtitle">Activa para desbloquear promos en Netflix y HBO Max</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 4: ENTRETENIMIENTO -->
+    <div class="card">
+      <div class="card-title"><span class="step-badge">4</span> Agregar entretenimiento</div>
+      <div class="section-explain">
+        <code>matrizEntretenimientosFamilia</code> filtrada por <code>familiasPorMercado</code>.
+        Selecciona máximo un plan por familia.
+      </div>
+      <div id="entretenimientoContainer"></div>
+    </div>
+
+    <!-- LÓGICA EXPLICADA -->
+    <div class="card">
+      <div class="card-title">⚙️ Lógica que corre al seleccionar</div>
+      <div class="logic-panel" id="logicPanel">
+        <!-- se genera dinámicamente -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN: RESUMEN -->
+  <div class="resumen">
+    <div class="card">
+      <div class="resumen-header">
+        <span>Resumen del pedido</span>
+        <span style="font-size:11px;color:#bbb">telmex.com</span>
+      </div>
+      <div id="resumenContent"><div class="resumen-empty">Selecciona un paquete para empezar</div></div>
+      <div class="promo-nota" id="promaNota">
+        ✅ Con domiciliación activa: Netflix y HBO Max a $0/mes durante la vigencia de la promo.
+      </div>
+      <div class="resumen-total" id="resumenTotal" style="display:none">
+        <div>
+          <div class="resumen-total-label">TOTAL AL MES</div>
+          <div style="font-size:10px;color:#bbb">impuestos no incluidos</div>
+        </div>
+        <div class="resumen-total-price" id="totalPrecio">$0</div>
+      </div>
+      <div class="info-box" id="infoBox" style="display:none">
+        <strong>💡 Diferencia hogar vs negocio</strong>
+        Los paquetes de negocio incluyen servicios adicionales (correo, hosting, etc.) que aparecen
+        como <code>serviciosIncluidos</code> y <code>serviciosAdicionales</code>.
+      </div>
+    </div>
+
+    <!-- DATOS EN CRUDO -->
+    <div class="card">
+      <div class="card-title">🔍 Objeto del paquete seleccionado</div>
+      <div class="logic-panel" id="rawData" style="font-size:11px;">
+        <span class="cmt">// Selecciona un paquete para ver su definición</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA (del script v31) =====================
+const matrizEntretenimientosFamilia = [
+  { familia:"Netflix", codigo:"NFX", logo:"", leyendaPleca:"Incluido 6 meses", entretenimientos:["NFX07","NFX07_P","NFX02","NFX03"] },
+  { familia:"HBO Max", codigo:"HBO", logo:"", leyendaPleca:"Incluido 6 meses", entretenimientos:["MAXCA","MAXCA_P","HBOMP"] },
+  { familia:"Amazon Prime", codigo:"AMA", logo:"", leyendaPleca:"30 días incluido", entretenimientos:["AMABN"] },
+  { familia:"Disney+", codigo:"DIS", logo:"", entretenimientos:["DISST","DISPR"] },
+  { familia:"Formula 1", codigo:"FO1", logo:"", entretenimientos:["F1001"] },
+  // FOX y MVS comentados en el original → no disponibles
+  { familia:"Fox One", codigo:"FOX", logo:"", disabled:true, entretenimientos:["FOXMP"] },
+  { familia:"MVS Hub", codigo:"MVS", logo:"", disabled:true, entretenimientos:["MVS81"] },
+  { familia:"Star TV", codigo:"STR", logo:"", entretenimientos:["STV02"] }
+]
+
+const promocionesPorMercado = {
+  hogar:   { domiciliacion:["NFX07_P","MAXCA_P"], entretenimiento:[] },
+  negocio: { domiciliacion:["NFX07_P","MAXCA_P"], entretenimiento:[] }
+}
+
+const familiasPorMercado = {
+  hogar:   ['NFX','HBO','AMA','DIS','FO1','FOX','MVS','STR'],
+  negocio: ['NFX','HBO']
+}
+
+const matrizEntretenimientos = {
+  NFX02: { precio:249, familia:"Netflix", detalle:"Estándar", descripcion:"2 dispositivos Full HD" },
+  NFX07: { precio:129, familia:"Netflix", detalle:"Estándar con anuncios", descripcion:"2 dispositivos Full HD" },
+  NFX07_P: { precio:0, precioSinPromo:129, familia:"Netflix", isPromo:true, leyendaPromo:"Promo al domiciliar", detalle:"Estándar con anuncios", descripcion:"2 dispositivos Full HD" },
+  NFX03: { precio:349, familia:"Netflix", detalle:"Premium", descripcion:"4 dispositivos UHD/4K" },
+  MAXCA: { precio:119, familia:"HBO Max", detalle:"Estándar con anuncios", descripcion:"2 dispositivos Full HD" },
+  MAXCA_P: { precio:0, precioSinPromo:119, familia:"HBO Max", isPromo:true, leyendaPromo:"Promo al domiciliar", detalle:"Estándar con anuncios", descripcion:"2 dispositivos Full HD" },
+  HBOMP: { precio:215, familia:"HBO Max", detalle:"Estándar", descripcion:"2 dispositivos Full HD" },
+  FOXMP: { precio:0, familia:"Fox One", detalle:"", descripcion:"3 dispositivos Full HD" },
+  AMABN: { precio:0, precioSinPromo:99, familia:"Amazon Prime", detalle:"", leyendaPromo:"30 días incluido", descripcion:"Hasta 3 dispositivos HD" },
+  F1001: { precio:119, familia:"Formula 1", detalle:"TV Pro", descripcion:"1 dispositivo Full HD" },
+  F1001_P: { precio:0, precioSinPromo:119, familia:"Formula 1", isPromo:true, leyendaPromo:"Promo al domiciliar", detalle:"TV Pro", descripcion:"1 dispositivo Full HD" },
+  MVS81: { precio:249, familia:"MVS Hub", detalle:"Esencial", descripcion:"127 Canales" },
+  STV02: { precio:219, familia:"Star TV", detalle:"STREAM WOW", descripcion:"93 Canales" },
+  DISST: { precio:259, familia:"Disney+", detalle:"Estándar", descripcion:"2 dispositivos" },
+  DISPR: { precio:339, familia:"Disney+", detalle:"Premium", descripcion:"2 dispositivos" }
+}
+
+const matrizPaquetes = [
+  { clave:"PQI22", tipo:"linea", precio:"333", velocidad:"15", mercado:"hogar" },
+  { clave:"PQI53", tipo:"linea", precio:"249", velocidad:"15", mercado:"hogar" },
+  { clave:"PQI40", tipo:"linea", precio:"289", velocidad:"15", mercado:"hogar" },
+  { clave:"PFR26", tipo:"internet", precio:"279", velocidad:"30", mercado:"hogar" },
+  { clave:"INF19", tipo:"paquete", precio:"389", velocidad:"200", mercado:"hogar" },
+  { clave:"PQI42", tipo:"paquete", precio:"435", velocidad:"300", mercado:"hogar" },
+  { clave:"PQI43", tipo:"paquete", precio:"499", velocidad:"400", mercado:"hogar" },
+  { clave:"PQI32", tipo:"paquete", precio:"599", velocidad:"500", mercado:"hogar" },
+  { clave:"PQI25", tipo:"paquete", precio:"999", velocidad:"1000", mercado:"hogar" },
+  { clave:"PFR39", tipo:"internet", precio:"349", velocidad:"200", mercado:"hogar" },
+  { clave:"PFR34", tipo:"internet", precio:"399", velocidad:"300", mercado:"hogar" },
+  { clave:"PFR18", tipo:"internet", precio:"549", velocidad:"600", mercado:"hogar" },
+  { clave:"PFR56", tipo:"internet", precio:"899", velocidad:"1000", mercado:"hogar" },
+  { clave:"PFRA5", tipo:"internet", precio:"449", velocidad:"400", mercado:"hogar" },
+  { clave:"PQI64", tipo:"paquete", precio:"649", velocidad:"600", mercado:"hogar" },
+  { clave:"PQI70", tipo:"paquete", precio:"725", velocidad:"800", mercado:"hogar" },
+  { clave:"PFRA7", tipo:"internet", precio:"499", velocidad:"500", mercado:"hogar" },
+  { clave:"PFRA8", tipo:"internet", precio:"649", velocidad:"800", mercado:"hogar" },
+  { clave:"LINEA", tipo:"linea", precio:"198", velocidad:"", serviciosAdicionales:0, serviciosIncluidos:1, mercado:"negocio" },
+  { clave:"PQI37", tipo:"paquete", precio:"399", velocidad:"200", serviciosAdicionales:3, serviciosIncluidos:6, mercado:"negocio" },
+  { clave:"PQI35", tipo:"paquete", precio:"549", velocidad:"400", serviciosAdicionales:3, serviciosIncluidos:6, mercado:"negocio" },
+  { clave:"PQI68", tipo:"paquete", precio:"649", velocidad:"500", serviciosAdicionales:0, serviciosIncluidos:11, mercado:"negocio" },
+  { clave:"PQI33", tipo:"paquete", precio:"799", velocidad:"600", serviciosAdicionales:0, serviciosIncluidos:11, mercado:"negocio" },
+  { clave:"PQI69", tipo:"paquete", precio:"999", velocidad:"800", serviciosAdicionales:1, serviciosIncluidos:11, mercado:"negocio" },
+  { clave:"PQI26", tipo:"paquete", precio:"1499", velocidad:"1000", serviciosAdicionales:1, serviciosIncluidos:11, mercado:"negocio" },
+  { clave:"PQI28", tipo:"paquete", precio:"1789", velocidad:"1000", serviciosAdicionales:1, serviciosIncluidos:11, mercado:"negocio" },
+  { clave:"PQI29", tipo:"paquete", precio:"2289", velocidad:"1000", serviciosAdicionales:1, serviciosIncluidos:11, mercado:"negocio" },
+  { clave:"PFR24", tipo:"internet", precio:"349", velocidad:"200", serviciosAdicionales:0, serviciosIncluidos:1, mercado:"negocio" },
+  { clave:"PFR14", tipo:"internet", precio:"399", velocidad:"300", serviciosAdicionales:0, serviciosIncluidos:1, mercado:"negocio" },
+  { clave:"PFR25", tipo:"internet", precio:"449", velocidad:"400", serviciosAdicionales:0, serviciosIncluidos:1, mercado:"negocio" },
+  { clave:"PFRA0", tipo:"internet", precio:"499", velocidad:"500", serviciosAdicionales:0, serviciosIncluidos:1, mercado:"negocio" },
+  { clave:"PFR17", tipo:"internet", precio:"549", velocidad:"600", serviciosAdicionales:0, serviciosIncluidos:1, mercado:"negocio" },
+  { clave:"PFRA9", tipo:"internet", precio:"649", velocidad:"800", serviciosAdicionales:0, serviciosIncluidos:1, mercado:"negocio" },
+  { clave:"PFR38", tipo:"internet", precio:"899", velocidad:"1000", serviciosAdicionales:0, serviciosIncluidos:1, mercado:"negocio" }
+]
+
+// ===================== STATE =====================
+let state = {
+  mercado: 'hogar',
+  tipoFiltro: 'todos',
+  paqueteSeleccionado: null,
+  domiciliacion: false,
+  entretenimientoSeleccionado: {} // { codigo_familia: codigo_producto }
+}
+
+// ===================== INIT =====================
+function init() {
+  renderPaquetes()
+  // Pre-select PQI25
+  selectPaquete('PQI25')
+  renderEntretenimiento()
+  updateResumen()
+  updateLogicPanel()
+}
+
+// ===================== MERCADO =====================
+function setMercado(mercado, btn) {
+  state.mercado = mercado
+  state.paqueteSeleccionado = null
+  state.entretenimientoSeleccionado = {}
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  document.getElementById('infoBox').style.display = mercado === 'negocio' ? 'block' : 'none'
+  renderPaquetes()
+  renderEntretenimiento()
+  updateResumen()
+  updateLogicPanel()
+}
+
+// ===================== TIPO FILTRO =====================
+function setTipo(tipo, btn) {
+  state.tipoFiltro = tipo
+  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  renderPaquetes()
+}
+
+// ===================== PAQUETES =====================
+function renderPaquetes() {
+  const grid = document.getElementById('paquetesGrid')
+  const filtrados = matrizPaquetes.filter(p => {
+    if (p.mercado !== state.mercado) return false
+    if (state.tipoFiltro !== 'todos' && p.tipo !== state.tipoFiltro) return false
+    return true
+  })
+
+  grid.innerHTML = filtrados.map(p => {
+    const isSelected = state.paqueteSeleccionado === p.clave
+    const svcs = p.serviciosIncluidos ? `<div class="pkg-servicios">${p.serviciosIncluidos} servicios incl.</div>` : ''
+    const vel = p.velocidad ? `<div class="pkg-vel">${p.velocidad}<span class="pkg-vel-unit"> Mbps</span></div>` : '<div class="pkg-vel" style="font-size:14px">Línea</div>'
+    return `<div class="pkg-card${isSelected ? ' selected' : ''}" onclick="selectPaquete('${p.clave}')">
+      <div class="pkg-selected-check">✓</div>
+      <div class="tipo-tag ${p.tipo}">${p.tipo}</div>
+      ${vel}
+      <div class="pkg-precio">$${p.precio}<span class="pkg-precio-sub">/mes</span></div>
+      ${svcs}
+      <div class="pkg-clave">${p.clave}</div>
+    </div>`
+  }).join('')
+}
+
+function selectPaquete(clave) {
+  state.paqueteSeleccionado = clave
+  renderPaquetes()
+  updateResumen()
+  updateLogicPanel()
+  updateRawData()
+}
+
+// ===================== DOMICILIACION =====================
+function toggleDomiciliacion() {
+  state.domiciliacion = !state.domiciliacion
+  const toggle = document.getElementById('domToggle')
+  const subtitle = document.getElementById('domSubtitle')
+  toggle.classList.toggle('active', state.domiciliacion)
+  if (state.domiciliacion) {
+    subtitle.textContent = 'Activo — Netflix y HBO Max a $0/mes'
+    subtitle.style.color = 'var(--promo-green)'
+  } else {
+    subtitle.textContent = 'Activa para desbloquear promos en Netflix y HBO Max'
+    subtitle.style.color = ''
+  }
+  // Re-render ent to show/hide promo versions
+  renderEntretenimiento()
+  updateResumen()
+  updateLogicPanel()
+}
+
+// ===================== ENTRETENIMIENTO =====================
+function getCodigoEfectivo(familia, domiciliacion) {
+  // Si domiciliacion está activa, intentar usar el _P si está en la lista de promos
+  const promoList = promocionesPorMercado[state.mercado].domiciliacion
+  const selectedCode = state.entretenimientoSeleccionado[familia.codigo]
+  if (!selectedCode) return null
+
+  // Si el codigo seleccionado tiene version _P y domiciliacion activa → upgrade
+  const codigoP = selectedCode + '_P'
+  if (domiciliacion && promoList.includes(codigoP) && matrizEntretenimientos[codigoP]) {
+    return codigoP
+  }
+  return selectedCode
+}
+
+function renderEntretenimiento() {
+  const container = document.getElementById('entretenimientoContainer')
+  const familiasActivas = familiasPorMercado[state.mercado]
+  const promoList = promocionesPorMercado[state.mercado].domiciliacion
+
+  container.innerHTML = matrizEntretenimientosFamilia.map(fam => {
+    if (!familiasActivas.includes(fam.codigo)) return '' // no disponible en este mercado
+
+    const isDisabled = fam.disabled
+    const plecaHtml = fam.leyendaPleca ? `<span class="pleca">${fam.leyendaPleca}</span>` : ''
+
+    // Filtrar opciones: excluir los _P si domiciliacion está OFF (son solo para la promo)
+    const opcionesBase = fam.entretenimientos.filter(codigo => {
+      const ent = matrizEntretenimientos[codigo]
+      if (!ent) return false
+      // Si es promo y domiciliacion OFF → no mostrar
+      if (ent.isPromo && !state.domiciliacion) return false
+      // Si existe versión _P activa → ocultar la versión base
+      const codigoP = codigo + '_P'
+      if (state.domiciliacion && promoList.includes(codigoP) && matrizEntretenimientos[codigoP]) return false
+      return true
+    })
+
+    const opcionesHtml = opcionesBase.map(codigo => {
+      const ent = matrizEntretenimientos[codigo]
+      if (!ent) return ''
+      const isSelected = state.entretenimientoSeleccionado[fam.codigo] === codigo ||
+        (state.entretenimientoSeleccionado[fam.codigo] && (state.entretenimientoSeleccionado[fam.codigo] + '_P') === codigo)
+
+      const esPromoActiva = ent.isPromo && state.domiciliacion
+      const precioHtml = ent.precio === 0
+        ? `<div class="ent-precio gratis">Incluido</div>`
+        : `<div class="ent-precio normal">$${ent.precio}/mes</div>`
+
+      const tachado = ent.precioSinPromo
+        ? `<div class="precio-tachado">antes $${ent.precioSinPromo}/mes</div>` : ''
+      const promaBadge = ent.leyendaPromo
+        ? `<div class="promo-badge">🎁 ${ent.leyendaPromo}</div>` : ''
+
+      return `<div class="ent-card${isSelected?' selected':''}${esPromoActiva?' promo-active':''}" onclick="toggleEntretenimiento('${fam.codigo}','${codigo}')">
+        <div class="ent-detalle">${ent.detalle || ent.familia}</div>
+        <div class="ent-desc">${ent.descripcion}</div>
+        ${precioHtml}
+        ${tachado}
+        ${promaBadge}
+      </div>`
+    }).join('')
+
+    return `<div class="ent-familia${isDisabled?' no-disponible':''}">
+      <div class="ent-familia-header">
+        ${fam.familia} ${plecaHtml}
+        ${isDisabled ? '<span style="font-size:10px;color:#bbb">(comentado en script)</span>' : ''}
+      </div>
+      <div class="ent-opciones">${opcionesHtml || '<span style="font-size:12px;color:#bbb">No hay opciones disponibles</span>'}</div>
+    </div>`
+  }).join('')
+}
+
+function toggleEntretenimiento(famCodigo, entCodigo) {
+  if (state.entretenimientoSeleccionado[famCodigo] === entCodigo ||
+      state.entretenimientoSeleccionado[famCodigo] + '_P' === entCodigo) {
+    // Deseleccionar
+    delete state.entretenimientoSeleccionado[famCodigo]
+  } else {
+    state.entretenimientoSeleccionado[famCodigo] = entCodigo.replace('_P','')
+  }
+  renderEntretenimiento()
+  updateResumen()
+  updateLogicPanel()
+}
+
+// ===================== RESUMEN =====================
+function updateResumen() {
+  const content = document.getElementById('resumenContent')
+  const totalEl = document.getElementById('totalPrecio')
+  const resumenTotal = document.getElementById('resumenTotal')
+  const promaNota = document.getElementById('promaNota')
+
+  if (!state.paqueteSeleccionado) {
+    content.innerHTML = '<div class="resumen-empty">Selecciona un paquete para empezar</div>'
+    resumenTotal.style.display = 'none'
+    promaNota.classList.remove('visible')
+    return
+  }
+
+  const paq = matrizPaquetes.find(p => p.clave === state.paqueteSeleccionado)
+  let total = parseInt(paq.precio)
+  let lines = []
+
+  // Línea paquete
+  const velText = paq.velocidad ? `${paq.velocidad} Mbps • ` : ''
+  const svcsText = paq.serviciosIncluidos ? ` • ${paq.serviciosIncluidos} servicios` : ''
+  lines.push(`<div class="resumen-line">
+    <div class="resumen-line-name">
+      <div>${paq.tipo === 'paquete' ? 'Paquete' : paq.tipo === 'internet' ? 'Internet' : 'Línea'} ${paq.clave}</div>
+      <div class="resumen-line-sub">${velText}${paq.tipo}${svcsText}</div>
+    </div>
+    <div class="resumen-line-price">$${paq.precio}</div>
+  </div>`)
+
+  // Líneas entretenimiento
+  const promoList = promocionesPorMercado[state.mercado].domiciliacion
+  let tienePromoActiva = false
+
+  for (const [famCodigo, selectedBase] of Object.entries(state.entretenimientoSeleccionado)) {
+    // Determinar código efectivo (con o sin _P)
+    const codigoP = selectedBase + '_P'
+    let codigoFinal = selectedBase
+    if (state.domiciliacion && promoList.includes(codigoP) && matrizEntretenimientos[codigoP]) {
+      codigoFinal = codigoP
+    }
+    const ent = matrizEntretenimientos[codigoFinal]
+    if (!ent) continue
+
+    total += ent.precio
+    const esPromo = ent.isPromo && state.domiciliacion
+    if (esPromo) tienePromoActiva = true
+
+    lines.push(`<div class="resumen-line">
+      <div class="resumen-line-name">
+        <div>${ent.familia} — ${ent.detalle}</div>
+        <div class="resumen-line-sub">${ent.descripcion}${esPromo ? ' 🎁' : ''}</div>
+      </div>
+      <div class="resumen-line-price${ent.precio === 0 ? ' gratis' : ''}">${ent.precio === 0 ? 'Incluido' : '$'+ent.precio}</div>
+    </div>`)
+  }
+
+  content.innerHTML = lines.join('')
+  totalEl.textContent = '$' + total.toLocaleString('es-MX')
+  resumenTotal.style.display = 'flex'
+  promaNota.classList.toggle('visible', tienePromoActiva)
+}
+
+// ===================== RAW DATA =====================
+function updateRawData() {
+  const el = document.getElementById('rawData')
+  if (!state.paqueteSeleccionado) {
+    el.innerHTML = '<span class="cmt">// Selecciona un paquete para ver su definición</span>'
+    return
+  }
+  const paq = matrizPaquetes.find(p => p.clave === state.paqueteSeleccionado)
+  const lines = Object.entries(paq).map(([k,v]) => {
+    const val = typeof v === 'string' ? `<span class="str">"${v}"</span>` : `<span class="num">${v}</span>`
+    return `  <span class="var">${k}</span>: ${val}`
+  }).join(',\n')
+  el.innerHTML = `<span class="cmt">// matrizPaquetes → ${paq.clave}</span>\n{\n${lines}\n}`
+}
+
+// ===================== LOGIC PANEL =====================
+function updateLogicPanel() {
+  const el = document.getElementById('logicPanel')
+  const promoList = JSON.stringify(promocionesPorMercado[state.mercado].domiciliacion)
+  const famActivas = JSON.stringify(familiasPorMercado[state.mercado])
+  const paqSel = state.paqueteSeleccionado || 'null'
+  const dom = state.domiciliacion
+
+  el.innerHTML = `<span class="cmt">// === ESTADO ACTUAL ===</span>
+<span class="kw">const</span> <span class="var">mercado</span> = <span class="str">"${state.mercado}"</span>
+<span class="kw">const</span> <span class="var">paqueteSeleccionado</span> = <span class="str">"${paqSel}"</span>
+<span class="kw">const</span> <span class="var">domiciliacion</span> = <span class="num">${dom}</span>
+
+<span class="cmt">// === FILTRO 1: familias visibles ===</span>
+<span class="var">familiasPorMercado</span>[<span class="str">"${state.mercado}"</span>]
+<span class="cmt">// → ${famActivas}</span>
+
+<span class="cmt">// === FILTRO 2: promos activas (si domiciliacion) ===</span>
+<span class="kw">if</span> (<span class="var">domiciliacion</span>) {
+  <span class="var">promocionesPorMercado</span>[<span class="str">"${state.mercado}"</span>].domiciliacion
+  <span class="cmt">// → ${promoList}</span>
+  <span class="cmt">// NFX07 se reemplaza por NFX07_P → precio $0</span>
+  <span class="cmt">// MAXCA se reemplaza por MAXCA_P → precio $0</span>
+}
+
+<span class="cmt">// === CÁLCULO TOTAL ===</span>
+<span class="fn">calcularTotal</span>(<span class="var">paquete</span>, <span class="var">entretenimientos</span>, <span class="var">domiciliacion</span>)
+<span class="cmt">// precio_base + suma de precios de entretenimiento</span>
+<span class="cmt">// (los _P tienen precio:0, por eso el total baja al domiciliar)</span>`
+}
+
+// ===================== START =====================
+init()
+</script>
+</body>
+</html>

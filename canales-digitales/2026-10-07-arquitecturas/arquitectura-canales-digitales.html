@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visión de Arquitectura — Canales Digitales Telmex</title>
+<style>
+:root {
+  --s0:#f9f9f7; --s1:#fcfcfb; --s2:#f2f2ef;
+  --ink:#0b0b0b; --ink2:#52514e; --ink3:#898781;
+  --grid:#e1e0d9; --base:#c3c2b7;
+  --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100;
+  --opt1:#2a78d6; --opt2:#1baf7a;
+  --good:#0ca30c; --good-bg:#e8f5e9;
+  --warn:#eda100; --warn-bg:#fff8e1;
+  --bad:#d32f2f; --bad-bg:#fdecea;
+  --radius:10px;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+[data-theme="dark"] {
+  --s0:#0d0d0d; --s1:#1a1a19; --s2:#232321;
+  --ink:#f0f0ee; --ink2:#c3c2b7; --ink3:#898781;
+  --grid:#2c2c2a; --base:#383835;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500;
+  --good:#0ca30c; --good-bg:#0a2e0a;
+  --warn:#c98500; --warn-bg:#1e1800;
+  --bad:#ef5350; --bad-bg:#3a0000;
+  --shadow:0 2px 16px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--s0);color:var(--ink);line-height:1.6}
+a{color:var(--c1);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Layout */
+.page{max-width:1200px;margin:0 auto;padding:0 12px 80px}
+
+/* Cover */
+.cover{padding:64px 0 48px;border-bottom:1px solid var(--grid);margin-bottom:48px}
+.cover-badge{display:inline-flex;align-items:center;gap:8px;background:var(--c1);color:#fff;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:99px;letter-spacing:.05em;margin-bottom:20px}
+.cover h1{font-size:2.2rem;font-weight:800;line-height:1.15;margin-bottom:12px}
+.cover .sub{font-size:1.05rem;color:var(--ink2);max-width:700px;margin-bottom:28px}
+.meta-row{display:flex;flex-wrap:wrap;gap:24px;font-size:.8125rem;color:var(--ink3)}
+.meta-row strong{color:var(--ink2)}
+.tog-btn{background:var(--s1);border:1px solid var(--grid);color:var(--ink2);cursor:pointer;padding:7px 14px;border-radius:6px;font-size:.8125rem;margin-top:20px;transition:background .15s}
+.tog-btn:hover{background:var(--grid)}
+
+/* Section */
+.section{margin-bottom:64px}
+.section-label{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:8px}
+.section-title{font-size:1.5rem;font-weight:800;margin-bottom:6px}
+.section-sub{font-size:.9rem;color:var(--ink2);max-width:800px;margin-bottom:28px}
+.section-divider{border:none;border-top:1px solid var(--grid);margin:64px 0}
+
+/* Pilares */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px}
+@media(max-width:700px){.pillars{grid-template-columns:1fr}}
+.pillar-card{background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:20px 22px;border-top:3px solid var(--accent)}
+.pillar-icon{font-size:1.5rem;margin-bottom:10px}
+.pillar-title{font-size:.9375rem;font-weight:700;margin-bottom:6px}
+.pillar-desc{font-size:.8125rem;color:var(--ink2);line-height:1.55}
+
+/* Info callout */
+.callout{border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;display:flex;gap:14px;align-items:flex-start}
+.callout-info{background:var(--s1);border:1px solid var(--c1);border-left:4px solid var(--c1)}
+.callout-warn{background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-left:4px solid var(--warn)}
+.callout-good{background:var(--good-bg);border:1px solid color-mix(in srgb,var(--good) 30%,transparent);border-left:4px solid var(--good)}
+.callout-icon{font-size:1.125rem;flex-shrink:0;margin-top:2px}
+.callout-body{font-size:.8375rem;color:var(--ink2);line-height:1.55}
+.callout-body strong{color:var(--ink)}
+
+/* Diagram embed */
+.diagram-wrap{background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);overflow:hidden;margin-bottom:32px}
+.diagram-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--grid)}
+.diagram-title{font-size:.875rem;font-weight:700}
+.diagram-badge{font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:99px;background:var(--c3);color:#fff}
+.diagram-iframe-wrap{position:relative;width:100%;height:0;padding-bottom:60%}
+.diagram-iframe-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;background:var(--s0)}
+.diagram-open-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;border:1px solid var(--grid);background:var(--s1);color:var(--ink2);font-size:.8125rem;cursor:pointer;text-decoration:none;transition:background .15s;margin-top:10px}
+.diagram-open-btn:hover{background:var(--grid);color:var(--ink)}
+
+/* Journey steps */
+.journey-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:32px}
+.jstep{background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 16px;position:relative}
+.jstep-num{position:absolute;top:-10px;left:14px;background:var(--c1);color:#fff;font-size:.625rem;font-weight:800;padding:2px 8px;border-radius:99px}
+.jstep-title{font-size:.8125rem;font-weight:700;margin-top:6px;margin-bottom:4px}
+.jstep-sub{font-size:.7rem;color:var(--ink3);line-height:1.4}
+.jstep-tmf{display:inline-flex;align-items:center;font-size:.6rem;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:99px;margin-top:6px;background:color-mix(in srgb,var(--c2) 15%,transparent);color:var(--c2)}
+
+/* Comparison table */
+.cmp-table{width:100%;border-collapse:collapse;font-size:.8125rem;margin-bottom:32px}
+.cmp-table th{text-align:left;padding:10px 14px;font-size:.75rem;font-weight:700;color:var(--ink2);border-bottom:2px solid var(--grid);background:var(--s2)}
+.cmp-table td{padding:10px 14px;border-bottom:1px solid var(--grid);vertical-align:top;line-height:1.45}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-table tr:hover td{background:var(--s1)}
+.cmp-table th:first-child,.cmp-table td:first-child{font-weight:600}
+.chip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:.6875rem;font-weight:600}
+.chip-g{background:var(--good-bg);color:#006300}
+.chip-y{background:var(--warn-bg);color:#7a5000}
+.chip-r{background:var(--bad-bg);color:var(--bad)}
+[data-theme="dark"] .chip-g{background:#0a2e0a;color:var(--good)}
+[data-theme="dark"] .chip-y{background:var(--warn-bg);color:var(--warn)}
+[data-theme="dark"] .chip-r{background:#3a0000;color:var(--bad)}
+
+/* Recommendation banner */
+.rec-banner{background:var(--s1);border:1px solid var(--grid);border-left:4px solid var(--opt2);border-radius:var(--radius);padding:20px 24px;margin-bottom:32px;display:flex;gap:16px;align-items:flex-start}
+.rec-icon{font-size:1.5rem;flex-shrink:0}
+.rec-title{font-size:1rem;font-weight:700;color:var(--opt2);margin-bottom:6px}
+.rec-body{font-size:.8375rem;color:var(--ink2);line-height:1.55}
+.rec-body strong{color:var(--ink)}
+
+/* Code block */
+.code-block{background:var(--s2);border:1px solid var(--grid);border-radius:var(--radius);padding:20px;font-family:"Cascadia Code","Fira Code","Consolas",monospace;font-size:.8rem;line-height:1.7;overflow-x:auto;margin-bottom:24px;color:var(--ink2)}
+.code-block .key{color:#3987e5}
+.code-block .str{color:var(--c3)}
+.code-block .num{color:var(--c4)}
+.code-block .cmt{color:var(--ink3);font-style:italic}
+
+/* Mapping table */
+.map-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:24px}
+.map-table th{padding:8px 12px;text-align:left;font-size:.75rem;color:var(--ink2);border-bottom:2px solid var(--grid);background:var(--s2)}
+.map-table td{padding:8px 12px;border-bottom:1px solid var(--grid);font-family:"Cascadia Code","Fira Code","Consolas",monospace;font-size:.75rem;vertical-align:top}
+.map-table tr:last-child td{border-bottom:none}
+.map-table td:first-child{color:var(--c3)}
+.map-table td:last-child{color:var(--ink2);font-family:inherit;font-size:.8rem}
+
+/* Pro/Con 2-col */
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px}
+@media(max-width:600px){.pc-grid{grid-template-columns:1fr}}
+.pc-card{border-radius:var(--radius);padding:18px 20px}
+.pc-pros{background:var(--good-bg);border:1px solid color-mix(in srgb,var(--good) 25%,transparent)}
+.pc-cons{background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 25%,transparent)}
+.pc-lbl{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.pc-pros .pc-lbl{color:#006300}
+.pc-cons .pc-lbl{color:#7a5000}
+[data-theme="dark"] .pc-pros .pc-lbl{color:var(--good)}
+[data-theme="dark"] .pc-cons .pc-lbl{color:var(--warn)}
+.pc-card ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.pc-card li{font-size:.8rem;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
+.pc-pros li::before{content:"✓";color:var(--good);font-weight:700;flex-shrink:0;margin-top:1px}
+.pc-cons li::before{content:"△";color:var(--warn);flex-shrink:0;margin-top:1px}
+
+/* TOC */
+.toc{background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:20px 24px;margin-bottom:48px}
+.toc-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);margin-bottom:12px}
+.toc ol{list-style:none;display:flex;flex-direction:column;gap:6px;counter-reset:toc}
+.toc li{counter-increment:toc;display:flex;align-items:baseline;gap:8px;font-size:.8375rem}
+.toc li::before{content:counter(toc);font-size:.6875rem;font-weight:700;color:var(--ink3);min-width:18px}
+.toc a{color:var(--ink2)}
+.toc a:hover{color:var(--ink)}
+
+/* Step badge */
+.step-badge{display:inline-flex;align-items:center;gap:6px;background:color-mix(in srgb,var(--c2) 15%,transparent);color:var(--c2);font-size:.6875rem;font-weight:700;padding:3px 10px;border-radius:99px;margin-bottom:12px}
+
+/* Note box */
+.note{background:var(--s2);border:1px solid var(--grid);border-radius:8px;padding:14px 18px;font-size:.8rem;color:var(--ink2);margin-bottom:20px;line-height:1.55}
+.note strong{color:var(--ink)}
+
+/* Footer */
+.footer{border-top:1px solid var(--grid);padding:32px 0;margin-top:80px;font-size:.75rem;color:var(--ink3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══ COVER ═════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">PASO 1 — Definición de opciones arquitectónicas</div>
+  <h1>Visión de Arquitectura<br>Canales Digitales Telmex</h1>
+  <p class="sub">Entregable técnico-funcional que define cómo los canales digitales (telmex.com, telnor.com, App embebida, Watson BOT) interactuarán con Salesforce Communications Cloud a través de MuleSoft bajo un modelo de integración LEGO basado en estándares TMF Open API.</p>
+  <div class="meta-row">
+    <span><strong>Cliente:</strong> Telmex (México)</span>
+    <span><strong>Alcance:</strong> Canales Digitales — Venta B2C Residencial</span>
+    <span><strong>Fecha:</strong> Octubre 2026</span>
+    <span><strong>Versión:</strong> 1.0 · PASO 1</span>
+    <span><strong>Equipo:</strong> Salesforce + MuleSoft</span>
+  </div>
+  <button class="tog-btn" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');this.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀ Modo claro':'🌙 Modo oscuro'">☀ Modo claro</button>
+</div>
+
+<!-- ═══ TOC ════════════════════════════════════════════════════════════════ -->
+<div class="toc">
+  <div class="toc-title">Contenido</div>
+  <ol>
+    <li><a href="#sec-pilares">Pilares de la Arquitectura LEGO</a></li>
+    <li><a href="#sec-curp">Omnicanalidad — Resolución de Identidad por CURP</a></li>
+    <li><a href="#sec-journey">Visión Funcional — User Journey por Pantallas</a></li>
+    <li><a href="#sec-opts">Visión Técnica — Opción 1 vs Opción 2 (flujos detallados)</a></li>
+    <li><a href="#sec-arquitectura">Diagrama de Arquitectura General</a></li>
+    <li><a href="#sec-tmf">Arquitectura TMF LEGO — Ejemplo Práctico TMF 699</a></li>
+    <li><a href="#sec-live">En Vivo — Paso a Paso por Opción</a></li>
+    <li><a href="#sec-variables">Variables y Sugerencias Out-of-the-Box</a></li>
+  </ol>
+</div>
+
+<!-- ═══ PILARES ════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-pilares">
+  <div class="section-label">Fundamentos</div>
+  <div class="section-title">Pilares de la Arquitectura LEGO</div>
+  <p class="section-sub">El cliente requiere una arquitectura dinámica donde cada capa puede ser reemplazada sin romper el sistema. El contrato de integración es el estándar TMF Open API — agnóstico del CRM, el canal y el middleware.</p>
+
+  <div class="pillars">
+    <div class="pillar-card" style="--accent:var(--c1)">
+      <div class="pillar-icon">🔗</div>
+      <div class="pillar-title">Omnicanalidad</div>
+      <div class="pillar-desc">Los cuatro canales digitales (telmex.com, telnor.com, App embebida, Watson BOT) consumen exactamente las mismas APIs TMF. El canal no conoce el CRM interno. Si mañana Salesforce es reemplazado por otro CRM, el canal no se modifica.</div>
+    </div>
+    <div class="pillar-card" style="--accent:var(--c3)">
+      <div class="pillar-icon">⚡</div>
+      <div class="pillar-title">Performance</div>
+      <div class="pillar-desc">El catálogo de productos se pre-carga en MuleSoft cada 24h en formato TMF 620. La experiencia online del cliente no depende de la latencia del PCM de Salesforce. Solo una llamada síncrona al CRM: TMF 622 Submit Order.</div>
+    </div>
+    <div class="pillar-card" style="--accent:var(--c4)">
+      <div class="pillar-icon">📐</div>
+      <div class="pillar-title">Buenas Prácticas</div>
+      <div class="pillar-desc">Passive Core de Salesforce. MuleSoft como backbone de integración obligatorio. Standard-First: capacidades OOB antes que custom code. Brownfield-First: respetar código e integraciones activas en producción.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-icon">🧩</div>
+    <div class="callout-body">
+      <strong>Filosofía LEGO:</strong> El contrato TMF garantiza que si el día de mañana cambia el CRM (Salesforce → otro), el canal digital (telmex.com → otro), o el middleware (MuleSoft → TIBCO), la arquitectura se adapta sin fricciones. Cada pieza es intercambiable siempre que respete el contrato TMF de la interfaz.
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══ USER JOURNEY ══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-journey">
+  <div class="section-label">Visión Funcional</div>
+  <div class="section-title">User Journey — Proceso de Contratación telmex.com</div>
+  <p class="section-sub">Recorrido paso a paso de la experiencia del usuario final en el canal digital, con el mapeo funcional de qué ocurre en backend en cada pantalla.</p>
+
+  <div class="journey-steps">
+    <div class="jstep">
+      <div class="jstep-num">PASO 1</div>
+      <div class="jstep-title">Home — Paquetes Infinitum</div>
+      <div class="jstep-sub">Manteleta inicial. El cliente selecciona un paquete (120/200/400/600/1000 megas). Filtros: empresa, tipo cliente, canal, tipo de alta.</div>
+      <span class="jstep-tmf">TMF 620</span>
+    </div>
+    <div class="jstep">
+      <div class="jstep-num">PASO 2</div>
+      <div class="jstep-title">Datos de Contacto + Dirección</div>
+      <div class="jstep-sub">Cel, CURP, INE/FM2, correo, teléfono adicional. Dirección: CP, calle, No. ext/int, colonia + mapa. Validación de factibilidad técnica en la ubicación.</div>
+      <span class="jstep-tmf">TMF 645 + 632 + 673</span>
+    </div>
+    <div class="jstep">
+      <div class="jstep-num">PASO 3</div>
+      <div class="jstep-title">2FA — Verificación de Identidad</div>
+      <div class="jstep-sub">Envío de OTP por 3 canales: SMS, WhatsApp o Llamada. El cliente ingresa el código para continuar. Clientes extranjeros: método alternativo.</div>
+      <span class="jstep-tmf">TMF 681</span>
+    </div>
+    <div class="jstep">
+      <div class="jstep-num">PASO 4</div>
+      <div class="jstep-title">Confirmación de Instalación</div>
+      <div class="jstep-sub">Portabilidad (Teléfono + NIP). Winback (número de servicio o documento). Gastos de instalación. Activar Recibo Telmex Digital. Agregar entretenimiento adicional.</div>
+      <span class="jstep-tmf">TMF 699 + TMF 645</span>
+    </div>
+    <div class="jstep">
+      <div class="jstep-num">PASO 5</div>
+      <div class="jstep-title">Entretenimiento (Opcional)</div>
+      <div class="jstep-sub">Promociones de entretenimiento al domiciliar. Add-ons: Netflix, HBO Max, Prime Video, Disney+, F1, Star. Paso opcional con popup de promo.</div>
+      <span class="jstep-tmf">TMF 620 Streaming</span>
+    </div>
+    <div class="jstep">
+      <div class="jstep-num">PASO 6</div>
+      <div class="jstep-title">Domiciliación — Pasarela de Pago</div>
+      <div class="jstep-sub">Renta anticipada. Pasarela bancaria Getnet. Si domicilia: genera orden. Si falla: pre-folio → canal telefónico. Timeout 5 min → mismo resultado.</div>
+      <span class="jstep-tmf">TMF 622 + TMF 641</span>
+    </div>
+    <div class="jstep">
+      <div class="jstep-num">PASO 7</div>
+      <div class="jstep-title">Thank You Page</div>
+      <div class="jstep-sub">Confirmación exitosa: Folio OS, paquete contratado, teléfono, beneficios incluidos. O solicitud exitosa (celular + correo) si requiere llamada de seguimiento.</div>
+      <span class="jstep-tmf">Confirmación</span>
+    </div>
+    <div class="jstep" style="border:1px dashed var(--grid)">
+      <div class="jstep-num" style="background:var(--ink3)">ALT</div>
+      <div class="jstep-title">Popup "Quiero que me llamen"</div>
+      <div class="jstep-sub">Disponible en cualquier punto del flujo. Formulario: nombre, celular, correo, C.P. Genera un Lead de interés en Salesforce vía TMF 699.</div>
+      <span class="jstep-tmf">TMF 699 Lead</span>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:20px">
+    <strong>Retargeting:</strong> Si el cliente abandona en cualquier punto del flujo, se activa el proceso de retargeting automático. El Lead capturado en TMF 699 permite el acompañamiento posterior. Si la domiciliación falla o hay timeout de 5 minutos, el pre-folio se envía al canal telefónico para atención personalizada.
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══ CURP IDENTITY ════════════════════════════════════════════════════ -->
+<div class="section" id="sec-curp">
+  <div class="section-label">Omnicanalidad</div>
+  <div class="section-title">Resolución de Identidad por CURP</div>
+  <p class="section-sub">Componente transversal aplicable a <strong>ambas opciones</strong>. Cuando el cliente ingresa su CURP en cualquier canal, MuleSoft resuelve si es un nuevo prospecto, un Lead existente o un cliente activo — sin duplicar registros en Salesforce.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px">
+    <div style="background:var(--good-bg);border:1px solid color-mix(in srgb,var(--good) 25%,transparent);border-radius:var(--radius);padding:18px">
+      <div style="font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--good);margin-bottom:8px">Escenario A — CURP Nuevo</div>
+      <p style="font-size:.8rem;line-height:1.55;color:var(--ink2)">MuleSoft no encuentra el CURP ni en Lead ni en Account. <strong>Crea un nuevo Lead</strong> en Salesforce (Status=New) y retorna el <code>leadId</code> al canal. El flujo de contratación continúa.</p>
+    </div>
+    <div style="background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 25%,transparent);border-radius:var(--radius);padding:18px">
+      <div style="font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--warn);margin-bottom:8px">Escenario B — Lead Existente</div>
+      <p style="font-size:.8rem;line-height:1.55;color:var(--ink2)">El CURP ya existe como Lead (prospecto previo que no completó). MuleSoft <strong>retorna el leadId existente</strong> — sin crear duplicado. El canal asocia la nueva interacción al Lead original.</p>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--c1);border-radius:var(--radius);padding:18px">
+      <div style="font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--c1);margin-bottom:8px">Escenario C — Cliente Activo</div>
+      <p style="font-size:.8rem;line-height:1.55;color:var(--ink2)">El CURP existe como Account/Contact (cliente con servicio activo). MuleSoft retorna el <code>accountId</code> + acción <code>redirect</code>. El canal redirige a <strong>miTelmex.com</strong> — no puede venderle por el flujo de alta nueva.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-info" style="margin-bottom:20px">
+    <div class="callout-icon">🔑</div>
+    <div class="callout-body">
+      <strong>CURP como clave única (18 caracteres):</strong> Es el identificador universal de identidad en todos los canales. Una sola consulta MuleSoft verifica <code>Lead.CURP__c</code> AND <code>Contact.CURP__c</code> simultáneamente. El canal nunca gestiona duplicados — toda la lógica de deduplicación vive en MuleSoft, agnóstica del canal que originó la solicitud.
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="diagram-header">
+      <span class="diagram-title">Resolución de Identidad CURP — Secuencia MuleSoft ↔ Salesforce</span>
+      <span class="diagram-badge">Sequence · Omnicanalidad</span>
+    </div>
+    <div class="diagram-iframe-wrap" style="padding-bottom:55%">
+      <iframe src="../.archify/sequence-curp-identity/curp-identity.html" title="CURP Identity Resolution" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+  </div>
+  <a class="diagram-open-btn" href="../.archify/sequence-curp-identity/curp-identity.html" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
+    Abrir secuencia CURP a pantalla completa
+  </a>
+
+  <div class="note" style="margin-top:16px">
+    <strong>Redirect URL Cliente Activo:</strong> Origen: <code>telmex.com/web/contrata/lineas-nuevas</code> → Destino: <code>loginsso.telmex.com/nidp/idff/sso → mitelmex.com/web/mitelmex-hogar/home</code>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══ OPCIONES ══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-opts">
+  <div class="section-label">Visión Técnica</div>
+  <div class="section-title">Opción 1 vs Opción 2 — Análisis Comparativo</div>
+  <p class="section-sub">Evaluación de las dos alternativas arquitectónicas para la integración de los canales digitales con Salesforce. <strong>Opción 3 (SFTP + TMF) está deprecada</strong> y excluida del análisis.</p>
+
+  <!-- OPT 1 -->
+  <div class="step-badge">Opción 1</div>
+  <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:8px;color:var(--opt1)">SDC APIs vía MuleSoft + Catálogo TMF 620 Cacheado</h3>
+  <p style="font-size:.875rem;color:var(--ink2);margin-bottom:16px">El catálogo se obtiene vía SDC API en un job batch cada 24h y se cachea en MuleSoft como TMF 620 — la carga del HOME no genera llamadas en tiempo real. El canal siempre habla con MuleSoft en estándares TMF. MuleSoft traduce internamente a SDC APIs de Salesforce. Las reglas de promo se obtienen en un paso posterior separado. El basket y la orden se gestionan en tiempo real vía SDC APIs a través de MuleSoft.</p>
+
+  <div class="pc-grid">
+    <div class="pc-card pc-pros">
+      <div class="pc-lbl">✓ Ventajas</div>
+      <ul>
+        <li>Catálogo cacheado (batch 24h) — HOME sin latencia de PCM ni llamadas concurrentes.</li>
+        <li>Canal → MuleSoft siempre en TMF estándar — arquitectura LEGO desde el canal.</li>
+        <li>MuleSoft traduce TMF → SDC internamente — si Salesforce cambia, el canal no se toca.</li>
+        <li>Reglas de promo separadas del catálogo — no bloquean la carga inicial.</li>
+        <li>Menor complejidad en el canal: Salesforce gestiona la lógica del carrito (basket).</li>
+      </ul>
+    </div>
+    <div class="pc-card pc-cons">
+      <div class="pc-lbl">△ Desventajas</div>
+      <ul>
+        <li>Reglas de promo en tiempo real (paso posterior) — aún depende de la disponibilidad de SF en ese momento.</li>
+        <li>Basket y orden en SDC real-time — si SF tiene latencia, afecta el paso de checkout.</li>
+        <li>Más llamadas online a Salesforce que Opción 2 durante el flujo de orden.</li>
+        <li>Catálogo con latencia máx. 24h — cambios urgentes en catálogo no se reflejan de inmediato.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- OPT1 SEQUENCE DIAGRAM -->
+  <div class="diagram-wrap" style="margin-top:16px">
+    <div class="diagram-header">
+      <span class="diagram-title">Opción 1 — Catálogo TMF 620 Cacheado + SDC APIs para Basket y Orden</span>
+      <span class="diagram-badge" style="background:var(--opt1)">Sequence · Opt 1</span>
+    </div>
+    <div class="diagram-iframe-wrap" style="padding-bottom:55%">
+      <iframe src="../.archify/sequence-option1-sdcapi/option1-sdcapi.html" title="Opción 1 SDC API" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+  </div>
+  <a class="diagram-open-btn" href="../.archify/sequence-option1-sdcapi/option1-sdcapi.html" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
+    Abrir secuencia Opción 1 a pantalla completa
+  </a>
+
+  <hr style="border:none;border-top:1px solid var(--grid);margin:40px 0">
+
+  <!-- OPT 2 -->
+  <div class="step-badge" style="margin-top:0;background:color-mix(in srgb,var(--opt2) 15%,transparent);color:var(--opt2)">Opción 2</div>
+  <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:8px;color:var(--opt2)">DC API Batch + Caché LEGO — El Canal Procesa la Lógica</h3>
+  <p style="font-size:.875rem;color:var(--ink2);margin-bottom:12px">El catálogo y las <strong>reglas de promoción</strong> (ej. paquete $389 200MB + domiciliación = Netflix 6 meses gratis) se obtienen vía DC API en un job batch cada 24h y se cachean en MuleSoft. El canal digital recibe los datos en crudo y <strong>procesa la lógica de promociones localmente</strong>. Solo TMF 622 (Submit Order) genera una llamada online a Salesforce.</p>
+  <div class="callout callout-info" style="margin-bottom:16px">
+    <div class="callout-icon">🧩</div>
+    <div class="callout-body"><strong>Ejemplo de regla de promo:</strong> Salesforce tiene en el catálogo: <em>"Si paquete_precio=389 AND canal=DIGITAL AND evento=domiciliacion → añadir ProductOffering Netflix_6M gratis"</em>. MuleSoft expone esta regla al canal. El canal la evalúa cuando el cliente domicilia y agrega Netflix automáticamente al carrito — sin consultar Salesforce en ese momento.</div>
+  </div>
+
+  <div class="pc-grid">
+    <div class="pc-card pc-pros">
+      <div class="pc-lbl">✓ Ventajas</div>
+      <ul>
+        <li>Arquitectura dinámica alineada con estándares de la industria (TMF Open API).</li>
+        <li>Performance óptima: la consulta de catálogo no ocurre en tiempo real — objetivo 1-3 seg posible.</li>
+        <li>La lógica de configuración del pedido (carrito) queda en la capa del canal — concepto LEGO.</li>
+        <li>Menor acoplamiento con Salesforce en el flujo online.</li>
+        <li>Resiliencia: si Salesforce tiene latencia, el catálogo sigue disponible.</li>
+        <li>Escalable para múltiples canales sin impacto en el CRM.</li>
+      </ul>
+    </div>
+    <div class="pc-card pc-cons">
+      <div class="pc-lbl">△ Desventajas</div>
+      <ul>
+        <li>Requiere añadir una capa de mantenibilidad: API custom para generar la Matriz de configuración de productos en MuleSoft.</li>
+        <li>Agrega tiempo de desarrollo: customización de la capa de caché y matriz.</li>
+        <li>El soporte del diseño recae en Salesforce; el desarrollo de la capa custom estará a cargo de Telmex.</li>
+        <li>Catálogo actualizado una vez al día — cambios de precios tienen latencia máx. 24h.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- OPT2 SEQUENCE DIAGRAM -->
+  <div class="diagram-wrap" style="margin-top:16px">
+    <div class="diagram-header">
+      <span class="diagram-title">Opción 2 — Flujo de Secuencia: Batch Caché + Canal Aplica Lógica Promo</span>
+      <span class="diagram-badge" style="background:var(--opt2)">Sequence · Opt 2</span>
+    </div>
+    <div class="diagram-iframe-wrap" style="padding-bottom:55%">
+      <iframe src="../.archify/sequence-option2-async/option2-async.html" title="Opción 2 Async" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+  </div>
+  <a class="diagram-open-btn" href="../.archify/sequence-option2-async/option2-async.html" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
+    Abrir secuencia Opción 2 a pantalla completa
+  </a>
+
+  <!-- COMPARACIÓN TABLE -->
+  <h4 style="font-size:.875rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:16px;margin-top:32px">Comparación Detallada</h4>
+  <div style="overflow-x:auto;margin-bottom:32px">
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th>Dimensión</th>
+        <th style="color:var(--opt1)">Opción 1 · SDC APIs + Caché Catálogo</th>
+        <th style="color:var(--opt2)">Opción 2 · Caché Completo + Canal Autónomo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Catálogo (HOME)</td>
+        <td>SDC batch 24h → caché TMF 620 en MuleSoft</td>
+        <td>SDC batch 24h → caché TMF 620 en MuleSoft</td>
+      </tr>
+      <tr>
+        <td>Reglas de promo</td>
+        <td>MuleSoft → SF SDC real-time (paso posterior separado)</td>
+        <td>SDC batch 24h → cacheadas en MuleSoft — canal aplica localmente</td>
+      </tr>
+      <tr>
+        <td>Basket / Carrito</td>
+        <td>MuleSoft traduce TMF → SDC basket APIs en tiempo real</td>
+        <td>Canal construye el carrito localmente — sin SF</td>
+      </tr>
+      <tr>
+        <td>Submit Orden</td>
+        <td>SDC <code>/v3/carts</code> via MuleSoft</td>
+        <td>TMF 622 → SF Core (1 sola llamada online)</td>
+      </tr>
+      <tr>
+        <td>Lead Management</td>
+        <td>TMF 699 → MuleSoft → SF (SOQL CURP + INSERT)</td>
+        <td>TMF 699 → MuleSoft → SF (SOQL CURP + INSERT)</td>
+      </tr>
+      <tr>
+        <td>Estándar TMF (canal → MuleSoft)</td>
+        <td><span class="chip chip-g">Sí</span> — TMF en todas las llamadas</td>
+        <td><span class="chip chip-g">Sí</span> — TMF en todas las llamadas</td>
+      </tr>
+      <tr>
+        <td>Performance HOME</td>
+        <td><span class="chip chip-g">Óptima</span> — caché 24h</td>
+        <td><span class="chip chip-g">Óptima</span> — caché 24h</td>
+      </tr>
+      <tr>
+        <td>Performance checkout (basket/orden)</td>
+        <td><span class="chip chip-y">Media</span> — SDC real-time en basket</td>
+        <td><span class="chip chip-g">Alta</span> — 1 llamada TMF 622</td>
+      </tr>
+      <tr>
+        <td>Dependencia SF en tiempo real</td>
+        <td><span class="chip chip-y">Parcial</span> — promo rules + basket</td>
+        <td><span class="chip chip-g">Mínima</span> — solo submit orden</td>
+      </tr>
+      <tr>
+        <td>Lógica de promo en el canal</td>
+        <td><span class="chip chip-y">No</span> — SF gestiona el basket</td>
+        <td><span class="chip chip-g">Sí</span> — canal aplica reglas localmente</td>
+      </tr>
+      <tr>
+        <td>Custom code MuleSoft</td>
+        <td><span class="chip chip-g">Bajo</span> — caché catálogo + proxy SDC</td>
+        <td><span class="chip chip-y">Moderado</span> — caché catálogo + reglas promo</td>
+      </tr>
+      <tr>
+        <td>Tiempo de delivery</td>
+        <td><span class="chip chip-g">Corto-Medio</span></td>
+        <td><span class="chip chip-y">Medio</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  
+
+
+  </div>
+
+<hr class="section-divider">
+
+<!-- ═══ ARQUITECTURA DIAGRAM ══════════════════════════════════════════════ -->
+<div class="section" id="sec-arquitectura">
+  <div class="section-label">Arquitectura General</div>
+  <div class="section-title">Diagramas de Arquitectura — Opción 1 vs Opción 2</div>
+  <p class="section-sub">Vista de alto nivel de cada opción: canales digitales, capa MuleSoft, Salesforce Communications Cloud y sistemas externos. Nota: la pasarela bancaria (domiciliación) es llamada directamente por el canal digital — no pasa por Salesforce.</p>
+
+  <div class="callout callout-info" style="margin-bottom:24px">
+    <div class="callout-icon">🏦</div>
+    <div class="callout-body"><strong>Domiciliación (Pasarela Bancaria):</strong> Es responsabilidad del canal digital — Telmex llama directamente a Getnet desde el frontend. MuleSoft y Salesforce solo reciben la confirmación de que la orden fue pagada y entonces crean el Order + Asset.</div>
+  </div>
+
+  <!-- OPT 1 ARCHITECTURE -->
+  <div class="step-badge" style="margin-bottom:12px">Opción 1</div>
+  <div class="diagram-wrap">
+    <div class="diagram-header">
+      <span class="diagram-title">Arquitectura Opción 1 — SDC APIs vía MuleSoft + Caché Catálogo</span>
+      <span class="diagram-badge" style="background:var(--opt1)">Architecture · Opt 1</span>
+    </div>
+    <div class="diagram-iframe-wrap" style="padding-bottom:65%">
+      <iframe src="../.archify/architecture-opt1/architecture-opt1.html" title="Arquitectura Opción 1" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+  </div>
+  <a class="diagram-open-btn" href="../.archify/architecture-opt1/architecture-opt1.html" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
+    Abrir arquitectura Opción 1 a pantalla completa
+  </a>
+
+  <hr style="border:none;border-top:1px solid var(--grid);margin:36px 0">
+
+  <!-- OPT 2 ARCHITECTURE -->
+  <div class="step-badge" style="margin-bottom:12px;background:color-mix(in srgb,var(--opt2) 15%,transparent);color:var(--opt2)">Opción 2</div>
+  <div class="diagram-wrap">
+    <div class="diagram-header">
+      <span class="diagram-title">Arquitectura Opción 2 — Caché Completo + Canal Autónomo + TMF 622</span>
+      <span class="diagram-badge" style="background:var(--opt2)">Architecture · Opt 2</span>
+    </div>
+    <div class="diagram-iframe-wrap" style="padding-bottom:65%">
+      <iframe src="../.archify/architecture-opt2-v2/architecture-opt2.html" title="Arquitectura Opción 2" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+  </div>
+  <a class="diagram-open-btn" href="../.archify/architecture-opt2-v2/architecture-opt2.html" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
+    Abrir arquitectura Opción 2 a pantalla completa
+  </a>
+
+  <div class="note" style="margin-top:20px">
+    <strong>Actores comunes a ambas opciones:</strong> (1) <strong>Canales Digitales</strong> — 100% responsabilidad Telmex per SOW; (2) <strong>MuleSoft</strong> — backbone obligatorio, recibe TMF del canal, traduce internamente; (3) <strong>Salesforce</strong> — fuente del catálogo (DC APIs batch), Core Objects (Lead, Account, Order, Asset); (4) <strong>Sistemas Externos</strong> — GIS, Buró de Crédito, PISA; (5) <strong>Pasarela Bancaria</strong> — responsabilidad canal digital, no Salesforce.
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══ TMF 699 ════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-tmf">
+  <div class="section-label">Arquitectura TMF LEGO</div>
+  <div class="section-title">Ejemplo Práctico — TMF 699: Lead Management</div>
+  <p class="section-sub">Demostración de cómo la filosofía LEGO funciona en la práctica. El canal envía un payload agnóstico estándar TMF 699. MuleSoft traduce y persiste en Salesforce. El canal nunca conoce el modelo interno del CRM.</p>
+
+  <!-- PAYLOAD EXAMPLE -->
+  <h4 style="font-size:.875rem;font-weight:700;color:var(--ink2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">1. Payload que envía el canal digital (agnóstico)</h4>
+  <div class="callout callout-info">
+    <div class="callout-icon">📤</div>
+    <div class="callout-body">
+      El canal llama <code>POST /salesManagement/v4/salesLead</code> al API Gateway de MuleSoft. Este es el <strong>contrato TMF 699</strong> — el canal no sabe que detrás existe Salesforce. Si el día de mañana el CRM cambia, este contrato se mantiene.
+    </div>
+  </div>
+  <div class="code-block">
+<span class="cmt">// POST /salesManagement/v4/salesLead</span>
+{
+  <span class="key">"name"</span>: <span class="str">"Lead Interés Infinitum 120 Megas"</span>,
+  <span class="key">"creationDate"</span>: <span class="str">"2026-10-06T11:12:00Z"</span>,
+  <span class="key">"status"</span>: <span class="str">"New"</span>,
+  <span class="key">"channel"</span>: {
+    <span class="key">"id"</span>: <span class="str">"WEB"</span>,
+    <span class="key">"name"</span>: <span class="str">"Portal Web Telmex"</span>
+  },
+  <span class="key">"relatedParty"</span>: [
+    {
+      <span class="key">"@referredType"</span>: <span class="str">"Individual"</span>,
+      <span class="key">"name"</span>: <span class="str">"Jessica Pérez"</span>,
+      <span class="key">"role"</span>: <span class="str">"Prospect"</span>,
+      <span class="key">"contactMedium"</span>: [
+        {
+          <span class="key">"mediumType"</span>: <span class="str">"telephone"</span>,
+          <span class="key">"characteristic"</span>: {
+            <span class="key">"phoneNumber"</span>: <span class="str">"5512345678"</span>
+          }
+        }
+      ]
+    }
+  ],
+  <span class="key">"relatedObject"</span>: [
+    {
+      <span class="key">"reference"</span>: <span class="str">"PO_INFINITUM_120"</span>,
+      <span class="key">"@referredType"</span>: <span class="str">"ProductOffering"</span>,
+      <span class="key">"name"</span>: <span class="str">"Paquete 120 megas"</span>
+    }
+  ]
+}
+  </div>
+
+  <!-- MAPPING TABLE -->
+  <h4 style="font-size:.875rem;font-weight:700;color:var(--ink2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;margin-top:28px">2. Mapeo MuleSoft → Salesforce Lead (traducción interna)</h4>
+  <div style="overflow-x:auto">
+  <table class="map-table">
+    <thead>
+      <tr>
+        <th>Campo TMF 699 (payload canal)</th>
+        <th>Campo Salesforce Lead</th>
+        <th>Notas</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>name</td><td>Lead.Company</td><td>Nombre del interés o paquete</td></tr>
+      <tr><td>relatedParty[0].name</td><td>Lead.FirstName + Lead.LastName</td><td>Split por espacio</td></tr>
+      <tr><td>relatedParty[0].contactMedium.phoneNumber</td><td>Lead.Phone</td><td>Celular de contacto</td></tr>
+      <tr><td>channel.id</td><td>Lead.LeadSource</td><td>WEB / APP / BOT</td></tr>
+      <tr><td>status</td><td>Lead.Status</td><td>New por defecto</td></tr>
+      <tr><td>relatedObject[0].reference</td><td>Lead.ProductOffering__c</td><td>Campo custom — referencia al producto</td></tr>
+      <tr><td>creationDate</td><td>Lead.CreatedDate</td><td>Fecha de interés</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- SEQUENCE DIAGRAM -->
+  <h4 style="font-size:.875rem;font-weight:700;color:var(--ink2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;margin-top:28px">3. Secuencia completa — TMF 699 End-to-End</h4>
+  <div class="diagram-wrap">
+    <div class="diagram-header">
+      <span class="diagram-title">Secuencia TMF 699 — Lead Management Telmex</span>
+      <span class="diagram-badge">Sequence · Animado</span>
+    </div>
+    <div class="diagram-iframe-wrap" style="padding-bottom:62%">
+      <iframe src="../.archify/sequence-tmf699-lead/tmf699-lead.html" title="TMF 699 Lead Sequence" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+  </div>
+  <a class="diagram-open-btn" href="../.archify/sequence-tmf699-lead/tmf699-lead.html" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
+    Abrir secuencia TMF 699 a pantalla completa
+  </a>
+
+  <div class="callout callout-good" style="margin-top:20px">
+    <div class="callout-icon">🧩</div>
+    <div class="callout-body">
+      <strong>El LEGO en acción:</strong> Si Telmex decide migrar de Salesforce a otro CRM, solo se modifica el mapeo en MuleSoft (paso 2 de la tabla). El canal digital sigue enviando exactamente el mismo payload TMF 699. Los procesos de Gestión de Demanda y Retargeting en Salesforce se disparan automáticamente desde el Lead creado, sin que el canal digital necesite conocerlos.
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══ EN VIVO ══════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-live">
+  <div class="section-label">Simulación Paso a Paso</div>
+  <div class="section-title">En Vivo — ¿Qué ocurre tras escenas en cada paso?</div>
+  <p class="section-sub">Desde que el cliente abre telmex.com hasta que recibe el Folio OS. Las operaciones se ejecutan en <strong>tandas</strong>, no en un solo llamado — algunas son síncronas con el usuario, otras son asíncronas aprovechando momentos de espera natural (como el OTP del 2FA).</p>
+
+  <div class="callout callout-info" style="margin-bottom:24px">
+    <div class="callout-icon">⚡</div>
+    <div class="callout-body">
+      <strong>El insight clave del timing:</strong> Cuando el cliente ingresa sus datos y da "Continuar" (PASO 2), el sistema ya sabe qué paquete seleccionó. Ese momento es la señal perfecta para <strong>iniciar en background</strong> el fetch de reglas de promo — mientras el cliente espera el OTP del 2FA (~5 seg), las reglas llegan. En Opción 2, las reglas ya están en caché y no hay espera.
+    </div>
+  </div>
+
+  <!-- LIVE OPT 1 -->
+  <div class="step-badge" style="margin-bottom:12px">Opción 1 — En Vivo</div>
+  <div class="diagram-wrap">
+    <div class="diagram-header">
+      <span class="diagram-title">En Vivo Opción 1 — SDC + Caché Catálogo + Promo async durante 2FA</span>
+      <span class="diagram-badge" style="background:var(--opt1)">Sequence · En Vivo Opt 1</span>
+    </div>
+    <div class="diagram-iframe-wrap" style="padding-bottom:60%">
+      <iframe src="../.archify/sequence-live-opt1/live-opt1.html" title="En Vivo Opción 1" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+  </div>
+  <a class="diagram-open-btn" href="../.archify/sequence-live-opt1/live-opt1.html" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
+    Abrir diagrama En Vivo Opción 1
+  </a>
+
+  <hr style="border:none;border-top:1px solid var(--grid);margin:36px 0">
+
+  <!-- LIVE OPT 2 -->
+  <div class="step-badge" style="margin-bottom:12px;background:color-mix(in srgb,var(--opt2) 15%,transparent);color:var(--opt2)">Opción 2 — En Vivo</div>
+  <div class="diagram-wrap">
+    <div class="diagram-header">
+      <span class="diagram-title">En Vivo Opción 2 — Caché Completo + Promos Instantáneas + TMF 622</span>
+      <span class="diagram-badge" style="background:var(--opt2)">Sequence · En Vivo Opt 2</span>
+    </div>
+    <div class="diagram-iframe-wrap" style="padding-bottom:60%">
+      <iframe src="../.archify/sequence-live-opt2/live-opt2.html" title="En Vivo Opción 2" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+  </div>
+  <a class="diagram-open-btn" href="../.archify/sequence-live-opt2/live-opt2.html" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
+    Abrir diagrama En Vivo Opción 2
+  </a>
+
+  <div class="note" style="margin-top:20px">
+    <strong>Diferencia de timing visible:</strong> En Opción 1, las flechas punteadas (async) muestran que SF responde con las reglas promo <em>durante</em> la espera del OTP — el cliente no lo nota. En Opción 2, no hay flecha async a SF porque las reglas ya estaban en caché — la respuesta llega < 50ms sin depender del 2FA timing.
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══ VARIABLES OOB ═════════════════════════════════════════════════════ -->
+<div class="section" id="sec-variables">
+  <div class="section-label">Optimización</div>
+  <div class="section-title">Variables para Explotar las Funcionalidades OOB</div>
+  <p class="section-sub">Sugerencias para maximizar las capacidades nativas de Salesforce Communications Cloud y MuleSoft sin introducir deuda técnica innecesaria.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:32px">
+    <div style="background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:20px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c1);margin-bottom:12px">Salesforce Comm Cloud — OOB</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;font-size:.8125rem">
+        <li style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--c3);font-weight:700;flex-shrink:0">→</span><div><strong>DC APIs como fuente única del catálogo</strong> — el batch job de MuleSoft consume las mismas DC APIs OOB, no un endpoint custom. Cambios en el catálogo PCM se reflejan sin tocar código.</div></li>
+        <li style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--c3);font-weight:700;flex-shrink:0">→</span><div><strong>Lead object nativo</strong> — usar el ciclo de vida estándar de Lead (Status: New → Working → Closed) sin customizaciones, aprovechando las reglas de asignación y los procesos de Gestión de Demanda existentes.</div></li>
+        <li style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--c3);font-weight:700;flex-shrink:0">→</span><div><strong>Account Hierarchy nativa</strong> — Consumer Account → Billing Account → Service Account, sin objetos custom. La jerarquía estándar de Communications Cloud soporta exactamente el modelo B2C de Telmex.</div></li>
+        <li style="display:flex;gap=10px;align-items:flex-start"><span style="color:var(--c3);font-weight:700;flex-shrink:0">→</span><div><strong>TMF 622 Submit Order OOB</strong> — la API de Communications Cloud ya expone un endpoint compatible con TMF 622. MuleSoft solo necesita adaptar el formato del payload del canal.</div></li>
+      </ul>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:20px">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c2);margin-bottom:12px">MuleSoft Anypoint — Estrategia</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;font-size:.8125rem">
+        <li style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--c3);font-weight:700;flex-shrink:0">→</span><div><strong>Object Store v2</strong> para la caché TMF 620 — evita bases de datos externas. El catálogo cacheado se almacena en el Object Store de MuleSoft, con TTL de 24h y posibilidad de invalidación por evento (Platform Event de Salesforce).</div></li>
+        <li style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--c3);font-weight:700;flex-shrink:0">→</span><div><strong>Scheduler + Batch Job</strong> OOB de MuleSoft para el job nocturno — sin infraestructura adicional. El batch se ejecuta fuera de horario pico (ej. 2:00 AM) para minimizar impacto en SF.</div></li>
+        <li style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--c3);font-weight:700;flex-shrink:0">→</span><div><strong>Platform Events de Salesforce</strong> para invalidación de caché — si el catálogo cambia urgentemente, un Platform Event dispara la recarga del caché sin esperar el job de 24h.</div></li>
+        <li style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--c3);font-weight:700;flex-shrink:0">→</span><div><strong>Named Credentials + External Credentials</strong> para autenticación con Salesforce (JWT Bearer) — cumple ADR-003 de Passive Core Auth, sin hardcodear credenciales.</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <strong>Matrix API Custom (necesaria en Opción 2):</strong> La capa de caché TMF 620 requiere un endpoint custom en MuleSoft que exponga la <em>Matriz de Configuración de Productos</em> — las reglas que determinan qué add-ons son compatibles con qué paquetes base. Este es el único componente custom requerido. Su <strong>desarrollo y mantenimiento es responsabilidad de Telmex</strong> per SOW; el equipo Salesforce provee el diseño y los datos de origen desde el PCM.
+    </div>
+  </div>
+</div>
+
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>Visión de Arquitectura Canales Digitales Telmex · PASO 1 · v1.0 · Oct 2026</span>
+  <span>Equipo Salesforce · Diagramas generados con Archify 3.0.1</span>
+</div>
+
+</div><!-- /page -->
+</body>
+</html>
