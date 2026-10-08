@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoC · TMF 620 Opción 1 — Catálogo Infinitum</title>
+<style>
+:root {
+  --tmx-blue:#003DA5; --tmx-blue-l:#1a5fc4; --tmx-blue-ll:#4080e0;
+  --tmx-red:#E30613; --tmx-yellow:#FFB800;
+  --mule-teal:#00B5E2; --mule-dark:#003A54; --mule-light:#00d4f5;
+  --sf-blue:#00A1E0; --sf-navy:#032D60; --sf-light:#4db8f0;
+  --bg-sim:#0a0e1a; --bg-panel:#0d1117; --bg-header:#161b22;
+  --font:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#f0f4f8;color:#1a1a2e}
+
+/* NAV */
+.nav-top{background:var(--tmx-blue);height:36px;display:flex;align-items:center;padding:0 24px;gap:24px;font-size:11px;color:rgba(255,255,255,.6)}
+.nav-main{background:#fff;border-bottom:3px solid var(--tmx-red);padding:0 24px;display:flex;align-items:center;height:60px;gap:32px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.nav-logo{font-size:22px;font-weight:900;color:var(--tmx-blue);font-style:italic;letter-spacing:-1px;line-height:1}
+.nav-logo .sub{font-size:9px;color:var(--tmx-red);font-weight:700;font-style:normal;letter-spacing:2px;display:block;text-transform:uppercase}
+.nav-items{display:flex;gap:28px;flex:1}
+.nav-item{font-size:13px;color:#333;cursor:pointer;padding:18px 0;border-bottom:3px solid transparent;font-weight:500}
+.nav-item.active{color:var(--tmx-blue);border-bottom-color:var(--tmx-blue);font-weight:700}
+.poc-badge{background:linear-gradient(135deg,var(--tmx-red),#ff4444);color:#fff;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+
+/* SIM SECTION */
+.sim-section{background:linear-gradient(180deg,#0a0e1a,#0d1525);padding:40px 24px 32px;position:relative;overflow:visible}
+.sim-section::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,61,165,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,61,165,.07) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.sim-header{text-align:center;margin-bottom:32px;position:relative}
+.poc-tag{display:inline-block;background:linear-gradient(135deg,var(--tmx-blue),var(--tmx-blue-l));color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase}
+.sim-header h2{color:#fff;font-size:19px;font-weight:700}
+.sim-header p{color:rgba(255,255,255,.45);font-size:12px;margin-top:5px}
+
+/* STEP DOTS */
+.step-row{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:32px}
+.step-dot{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+.step-circle{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:rgba(255,255,255,.25);transition:all .3s}
+.step-dot.active .step-circle{background:var(--tmx-blue);border-color:var(--tmx-blue-l);color:#fff;box-shadow:0 0 16px rgba(0,61,165,.7)}
+.step-dot.done .step-circle{background:rgba(0,181,226,.15);border-color:var(--mule-teal);color:var(--mule-teal)}
+.step-lbl{font-size:10px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.5px;transition:color .3s}
+.step-dot.active .step-lbl{color:rgba(255,255,255,.8)}
+.step-dot.done .step-lbl{color:var(--mule-teal)}
+.step-conn{width:44px;height:2px;background:rgba(255,255,255,.07);margin-top:16px}
+.step-conn.lit{background:linear-gradient(90deg,var(--tmx-blue),var(--mule-teal))}
+
+/* MINECRAFT ASTRO ROBOT */
+.robot-stage{position:absolute;left:0;right:0;top:0;pointer-events:none;z-index:30}
+.robot-wrap{
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;
+  transition:left .42s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+}
+.mc-robot{
+  image-rendering:pixelated;image-rendering:crisp-edges;
+  filter:drop-shadow(0 0 8px rgba(0,181,226,.7)) drop-shadow(0 4px 4px rgba(0,0,0,.5));
+  animation:botBounce .8s ease-in-out infinite;
+  display:block;
+}
+.robot-shadow{
+  width:36px;height:8px;
+  background:radial-gradient(ellipse,rgba(0,181,226,.55) 0%,transparent 70%);
+  border-radius:50%;
+  animation:shadowPulse .8s ease-in-out infinite;
+  margin-top:-4px;
+}
+@keyframes botBounce{
+  0%,100%{transform:translateY(0) scaleY(1)}
+  40%{transform:translateY(-14px) scaleY(1.05)}
+  55%{transform:translateY(-14px) scaleY(1.05)}
+  88%{transform:translateY(2px) scaleY(.96)}
+}
+@keyframes shadowPulse{
+  0%,100%{transform:scaleX(1);opacity:.55}
+  40%,55%{transform:scaleX(.55);opacity:.2}
+}
+@keyframes botJump{
+  0%{transform:translateY(0) rotate(0deg)}
+  35%{transform:translateY(-20px) rotate(-8deg)}
+  65%{transform:translateY(-20px) rotate(8deg)}
+  100%{transform:translateY(0) rotate(0deg)}
+}
+.robot-wrap.jumping .mc-robot{
+  animation:botJump .42s ease-in-out,botBounce .8s ease-in-out .42s infinite;
+}
+@keyframes botCelebrate{
+  0%  {transform:translateY(0) rotate(0) scale(1)}
+  12% {transform:translateY(-22px) rotate(-18deg) scale(1.12)}
+  24% {transform:translateY(0) rotate(18deg) scale(1)}
+  36% {transform:translateY(-18px) rotate(-12deg) scale(1.08)}
+  48% {transform:translateY(0) rotate(12deg) scale(1)}
+  60% {transform:translateY(-12px) rotate(-6deg) scale(1.05)}
+  72% {transform:translateY(0) rotate(0) scale(1)}
+  82% {transform:translateY(-6px) scale(1.03)}
+  100%{transform:translateY(0) scale(1)}
+}
+.robot-wrap.celebrating .mc-robot{
+  animation:botCelebrate 1.4s ease-in-out,botBounce .8s ease-in-out 1.4s infinite;
+  filter:drop-shadow(0 0 10px rgba(255,184,0,.8)) drop-shadow(0 0 20px rgba(0,181,226,.6));
+}
+/* Confetti pixel */
+.confetti-pix{
+  position:absolute;
+  width:6px;height:6px;
+  border-radius:1px;
+  pointer-events:none;
+  z-index:40;
+  transition:transform .9s cubic-bezier(.2,.8,.4,1),opacity .9s ease;
+  opacity:1;
+}
+
+/* LEGO BLOCKS THEATER */
+.theater{display:flex;align-items:center;justify-content:center;gap:0;padding:8px 0 0;position:relative}
+
+/* Block assembly: 118w × 88h (front 100×70 + top 18 + right 18) */
+.block-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.block-asm{position:relative;width:118px;height:88px;cursor:pointer;transition:filter .3s}
+.b-top{position:absolute;top:0;left:0;width:118px;height:18px;clip-path:polygon(0 18px,18px 0,118px 0,100px 18px)}
+.b-front{position:absolute;top:18px;left:0;width:100px;height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:0 0 4px 4px}
+.b-right{position:absolute;top:0;left:100px;width:18px;height:88px;clip-path:polygon(0 18px,18px 0,18px 70px,0 88px)}
+.b-name{font-size:11px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:1px;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.b-sub{font-size:9px;color:rgba(255,255,255,.65);text-align:center;margin-top:-2px}
+.b-icon{font-size:26px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.block-badge{padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.6;transition:all .3s}
+
+/* Glow states */
+.block-wrap.glow-tmx .block-asm{filter:brightness(1.25) drop-shadow(0 0 14px #003DA5) drop-shadow(0 0 28px rgba(227,6,19,.4))}
+.block-wrap.glow-tmx .block-badge{opacity:1}
+.block-wrap.glow-mule .block-asm{filter:brightness(1.25) drop-shadow(0 0 14px var(--mule-teal)) drop-shadow(0 0 28px rgba(0,181,226,.4))}
+.block-wrap.glow-mule .block-badge{opacity:1}
+.block-wrap.glow-sf .block-asm{filter:brightness(1.25) drop-shadow(0 0 14px var(--sf-blue)) drop-shadow(0 0 28px rgba(0,161,224,.4))}
+.block-wrap.glow-sf .block-badge{opacity:1}
+.block-wrap.done-b .block-asm{filter:brightness(.7)}
+
+/* ARROWS */
+.arrow-col{display:flex;flex-direction:column;align-items:center;gap:2px;width:80px;padding-top:22px}
+.arr-fwd,.arr-bwd{width:100%;height:2px;position:relative;overflow:visible}
+.arr-fwd{background:rgba(255,255,255,.1);margin-bottom:2px}
+.arr-bwd{background:rgba(255,255,255,.06)}
+.arr-fwd.lit{background:linear-gradient(90deg,rgba(0,61,165,.8),rgba(0,181,226,.8))}
+.arr-bwd.lit{background:linear-gradient(90deg,rgba(0,181,226,.8),rgba(86,211,100,.8))}
+.arr-tip{font-size:10px;color:rgba(255,255,255,.2);text-align:center;font-family:monospace;font-size:9px;line-height:1.3;max-width:80px;transition:color .3s}
+.arrow-col.lit .arr-tip{color:rgba(255,255,255,.7)}
+
+/* Animated packet */
+.pkt{position:absolute;top:-7px;width:16px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;opacity:0;z-index:10;pointer-events:none}
+@keyframes goFwd{0%{left:-8px;opacity:0;transform:scale(.5)}10%{opacity:1;transform:scale(1)}90%{opacity:1}100%{left:calc(100% - 8px);opacity:0}}
+@keyframes goBwd{0%{left:calc(100% - 8px);opacity:0;transform:scale(.5)}10%{opacity:1;transform:scale(1)}90%{opacity:1}100%{left:-8px;opacity:0}}
+.pkt.go-fwd{animation:goFwd 1.1s ease-in-out forwards}
+.pkt.go-bwd{animation:goBwd 1.1s ease-in-out forwards}
+
+/* JSON PANEL */
+.json-panel{max-width:880px;margin:28px auto 0;background:var(--bg-panel);border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.07);box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.jp-header{background:var(--bg-header);padding:10px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.06)}
+.jp-tag{padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;font-family:monospace;letter-spacing:.5px;text-transform:uppercase;transition:all .3s}
+.jp-title{color:rgba(255,255,255,.75);font-size:12px;flex:1}
+.jp-dir{font-size:11px;color:rgba(255,255,255,.3);font-family:monospace}
+.jp-body{padding:18px;font-family:'Courier New',monospace;font-size:12px;line-height:1.8;max-height:240px;overflow-y:auto;transition:opacity .25s}
+.jk{color:#79c0ff} .jv{color:#a8ff78} .jn{color:#ffab70} .jb{color:#ff79c6}
+.jp_{color:#e6edf3} .jc{color:#5c6370;font-style:italic} .jm{color:#ffa657;font-weight:700}
+.ju{color:#a5d6ff} .jh{color:#d2a8ff} .jl{color:#56d364;font-weight:700}
+
+.step-desc{text-align:center;margin:18px auto 0;padding:10px 20px;background:rgba(255,255,255,.04);border-radius:8px;max-width:580px}
+.step-desc h4{color:#fff;font-size:13px;margin-bottom:3px}
+.step-desc p{color:rgba(255,255,255,.45);font-size:11px}
+
+.sim-status{text-align:center;margin-top:14px;font-size:12px;color:rgba(255,255,255,.4);min-height:18px}
+.replay-wrap{text-align:center;margin-top:14px}
+.replay-btn{background:linear-gradient(135deg,var(--tmx-blue),var(--tmx-blue-l));color:#fff;border:none;padding:10px 26px;border-radius:24px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 16px rgba(0,61,165,.4);display:none;transition:all .2s}
+.replay-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,61,165,.5)}
+.replay-btn.show{display:inline-block}
+
+/* TMF INFO BAR */
+.tmf-bar{background:var(--bg-panel);padding:10px 20px;display:none;align-items:center;gap:14px;font-family:monospace;font-size:11px;border-top:1px solid rgba(255,255,255,.06)}
+.tmf-chip{padding:2px 9px;border-radius:9px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.chip-tmf{background:rgba(0,61,165,.3);color:#79c0ff;border:1px solid rgba(0,61,165,.5)}
+.chip-sdc{background:rgba(0,161,224,.2);color:#a5d6ff;border:1px solid rgba(0,161,224,.4)}
+.tmf-path{color:rgba(255,255,255,.45)}
+.tmf-mth{color:#ffa657;font-weight:700}
+.tmf-ok{color:#56d364;font-weight:700}
+
+/* CATALOG SECTION */
+.cat-section{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s;pointer-events:none}
+.cat-section.show{opacity:1;transform:translateY(0);pointer-events:all}
+
+/* Banner */
+.cat-banner{background:linear-gradient(135deg,#003DA5 0%,#0052cc 55%,#003DA5 100%);padding:28px 40px;display:flex;align-items:center;justify-content:space-between}
+.banner-logo{font-size:30px;font-weight:900;font-style:italic;color:#fff;letter-spacing:-1px}
+.banner-logo .vel{display:block;font-size:10px;font-style:normal;font-weight:700;color:var(--tmx-yellow);letter-spacing:2px;text-transform:uppercase;margin-top:-3px}
+.banner-right h3{font-size:16px;font-weight:700;color:#fff}
+.banner-right p{font-size:12px;color:rgba(255,255,255,.7);margin-top:3px}
+
+/* Body */
+.cat-body{max-width:940px;margin:0 auto;padding:28px 20px}
+.cat-tabs{display:flex;width:fit-content;border:2px solid var(--tmx-blue);border-radius:7px;overflow:hidden;margin-bottom:24px}
+.cat-tab{padding:9px 22px;font-size:12px;font-weight:600;color:var(--tmx-blue);cursor:pointer;background:#fff;border:none;transition:all .2s}
+.cat-tab.active{background:var(--tmx-blue);color:#fff}
+.cat-heading{font-size:26px;font-weight:900;color:var(--tmx-blue);text-align:center;margin-bottom:6px}
+.cat-sub{font-size:13px;color:#666;text-align:center;margin-bottom:24px}
+
+/* Offer rows — telmex.com style */
+.offers-list{display:flex;flex-direction:column;gap:10px}
+.offer-row{background:#fff;border-radius:10px;padding:16px 24px;display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border:2px solid transparent;cursor:pointer;transition:all .2s}
+.offer-row:hover{border-color:var(--tmx-blue);box-shadow:0 4px 16px rgba(0,61,165,.1);transform:translateY(-1px)}
+.offer-row.hot{border-color:var(--tmx-yellow);background:linear-gradient(135deg,#fff,#fffdf5)}
+
+/* Speed */
+.speed-area{display:flex;align-items:baseline;gap:6px}
+.spd-prefix{font-size:12px;color:#888;font-weight:500}
+.spd-num{font-size:48px;font-weight:900;color:var(--tmx-yellow);line-height:1;font-style:italic}
+.spd-unit{font-size:16px;font-weight:700;color:var(--tmx-blue);align-self:flex-end;margin-bottom:5px}
+.spd-desc{font-size:10px;color:#999;align-self:flex-end;margin-bottom:7px;line-height:1.4;max-width:100px}
+.hot-tag{background:var(--tmx-yellow);color:#1a1a2e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;align-self:center;margin-left:6px;white-space:nowrap}
+
+/* Price */
+.price-area{text-align:right}
+.price-lbl{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.5px}
+.price-amt{font-size:30px;font-weight:900;color:var(--tmx-red);line-height:1}
+.price-per{font-size:11px;color:#aaa;margin-top:1px}
+
+/* CTA */
+.offer-cta{display:flex;flex-direction:column;align-items:center;gap:5px}
+.cta-btn{background:var(--tmx-red);color:#fff;border:none;padding:11px 20px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s}
+.cta-btn:hover{background:#c00010;transform:translateY(-1px);box-shadow:0 4px 12px rgba(227,6,19,.3)}
+.offer-code{font-family:monospace;font-size:9px;color:#ccc}
+
+/* Services bar */
+.svc-bar{background:#fff;border-radius:10px;padding:14px 24px;margin-top:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.svc-bar p{font-size:14px;color:#444}
+.svc-name{font-weight:700;color:var(--tmx-blue)}
+.svc-name.r{color:var(--tmx-red)}
+
+/* Footer */
+.cat-footer{background:var(--tmx-blue);color:#fff;text-align:center;padding:20px 24px}
+.cat-footer p{font-size:11px;opacity:.65}
+.cat-footer .leyenda{font-size:10px;opacity:.35;margin-top:6px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,.04)}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav-top">
+  <span>📱 Mi Telmex</span><span>💳 Pago en línea</span><span>📦 Seguimiento de orden</span>
+  <span style="margin-left:auto">🔍 Buscar</span>
+</div>
+<nav class="nav-main">
+  <div class="nav-logo">infinitum<span class="sub">Exceso de Velocidad</span></div>
+  <div class="nav-items">
+    <div class="nav-item active">Telefonía e Internet</div>
+    <div class="nav-item">Solo Internet</div>
+    <div class="nav-item">Soporte</div>
+    <div class="nav-item">Empresas</div>
+  </div>
+  <span class="poc-badge">PoC · TMF 620</span>
+</nav>
+
+<!-- SIMULATION -->
+<section class="sim-section">
+  <div class="sim-header">
+    <div class="poc-tag">Opción 1 · Arquitectura de Integración</div>
+    <h2>Simulación del flujo TMF 620 → SDC API → Catálogo</h2>
+    <p>telmex.com · MuleSoft Anypoint · Salesforce Communications Cloud</p>
+  </div>
+
+  <div class="step-row" id="stepRow"></div>
+
+  <!-- BLOCKS THEATER -->
+  <div class="theater">
+
+    <!-- TELMEX BLOCK -->
+    <div class="block-wrap" id="bwTmx">
+      <div class="block-asm">
+        <div class="b-top" style="background:linear-gradient(90deg,#2060d8,#1a5fc4)"></div>
+        <div class="b-front" style="background:linear-gradient(170deg,#1a5fc4 0%,#003DA5 50%,#002580 100%);border-top:3px solid var(--tmx-red)">
+          <div class="b-icon">🌐</div>
+          <div class="b-name">telmex.com</div>
+          <div class="b-sub">Canal Digital</div>
+        </div>
+        <div class="b-right" style="background:linear-gradient(180deg,#0030a0,#001a60)"></div>
+      </div>
+      <span class="block-badge" style="background:rgba(0,61,165,.25);color:#79c0ff;border:1px solid rgba(0,61,165,.45)">TMF 620</span>
+    </div>
+
+    <!-- ARROW 1 -->
+    <div class="arrow-col" id="ac1">
+      <div class="arr-fwd" id="af1">
+        <div class="pkt" id="pf1" style="background:var(--tmx-blue);border:2px solid #79c0ff">TMF</div>
+      </div>
+      <div class="arr-bwd" id="ab1">
+        <div class="pkt" id="pb1" style="background:#56d364;border:2px solid #a8ff78">JSON</div>
+      </div>
+      <div class="arr-tip" id="at1">TMF 620 →<br>← response</div>
+    </div>
+
+    <!-- MULESOFT BLOCK -->
+    <div class="block-wrap" id="bwMule">
+      <div class="block-asm">
+        <div class="b-top" style="background:linear-gradient(90deg,var(--mule-light),var(--mule-teal))"></div>
+        <div class="b-front" style="background:linear-gradient(170deg,var(--mule-light) 0%,var(--mule-teal) 50%,#0090c0 100%)">
+          <div class="b-icon">⚙️</div>
+          <div class="b-name">MuleSoft</div>
+          <div class="b-sub">Anypoint Platform</div>
+        </div>
+        <div class="b-right" style="background:linear-gradient(180deg,#0090c0,#005a80)"></div>
+      </div>
+      <span class="block-badge" style="background:rgba(0,181,226,.15);color:var(--mule-light);border:1px solid rgba(0,181,226,.35)">Orchestrator</span>
+    </div>
+
+    <!-- ARROW 2 -->
+    <div class="arrow-col" id="ac2">
+      <div class="arr-fwd" id="af2">
+        <div class="pkt" id="pf2" style="background:var(--mule-teal);border:2px solid var(--mule-light)">SDC</div>
+      </div>
+      <div class="arr-bwd" id="ab2">
+        <div class="pkt" id="pb2" style="background:var(--sf-blue);border:2px solid var(--sf-light)">SDC</div>
+      </div>
+      <div class="arr-tip" id="at2">SDC API →<br>← response</div>
+    </div>
+
+    <!-- SALESFORCE BLOCK -->
+    <div class="block-wrap" id="bwSF">
+      <div class="block-asm">
+        <div class="b-top" style="background:linear-gradient(90deg,#0060b0,var(--sf-navy))"></div>
+        <div class="b-front" style="background:linear-gradient(170deg,var(--sf-blue) 0%,#0070b8 40%,var(--sf-navy) 100%)">
+          <div class="b-icon">☁️</div>
+          <div class="b-name">Salesforce</div>
+          <div class="b-sub">SDC · Comm Cloud</div>
+        </div>
+        <div class="b-right" style="background:linear-gradient(180deg,#003a80,#021040)"></div>
+      </div>
+      <span class="block-badge" style="background:rgba(0,161,224,.15);color:var(--sf-light);border:1px solid rgba(0,161,224,.35)">DC API v3</span>
+    </div>
+
+  </div><!-- /theater -->
+
+  <!-- MINECRAFT ASTRO ROBOT — floats above active block -->
+  <div id="robotStage" class="robot-stage">
+    <div class="robot-wrap" id="robotWrap" style="left:50%;transform:translateX(-50%)">
+      <!-- Pixel-art Astro / SF robot (14×16 grid, 5px/pixel = 70×80px) -->
+      <svg class="mc-robot" viewBox="0 0 14 16" width="48" height="55"
+           xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <!-- ANTENNAS -->
+        <rect x="3" y="0" width="1" height="3" fill="#032D60"/>
+        <rect x="10" y="0" width="1" height="3" fill="#032D60"/>
+        <rect x="2" y="0" width="3" height="1" fill="#e8f2ff"/>
+        <rect x="9" y="0" width="3" height="1" fill="#e8f2ff"/>
+        <!-- HEAD -->
+        <rect x="2" y="2" width="10" height="7" fill="#f0f4ff"/>
+        <!-- VISOR BAND -->
+        <rect x="1" y="3" width="12" height="4" fill="#032D60"/>
+        <!-- WHITE HEAD SIDES (over visor) -->
+        <rect x="1" y="3" width="2" height="4" fill="#f0f4ff"/>
+        <rect x="11" y="3" width="2" height="4" fill="#f0f4ff"/>
+        <!-- LEFT LENS (navy + cyan) -->
+        <rect x="3" y="3" width="3" height="4" fill="#032D60"/>
+        <rect x="3" y="4" width="3" height="2" fill="#00B5E2"/>
+        <rect x="3" y="4" width="1" height="1" fill="#80dfff"/>
+        <!-- BRIDGE -->
+        <rect x="6" y="4" width="2" height="2" fill="#032D60"/>
+        <!-- RIGHT LENS -->
+        <rect x="8" y="3" width="3" height="4" fill="#032D60"/>
+        <rect x="8" y="4" width="3" height="2" fill="#00B5E2"/>
+        <rect x="8" y="4" width="1" height="1" fill="#80dfff"/>
+        <!-- LOWER FACE -->
+        <rect x="2" y="7" width="10" height="2" fill="#f0f4ff"/>
+        <rect x="5" y="8" width="1" height="1" fill="#b8d4ee"/>
+        <rect x="8" y="8" width="1" height="1" fill="#b8d4ee"/>
+        <!-- NECK -->
+        <rect x="5" y="9" width="4" height="1" fill="#d4e8f8"/>
+        <!-- BODY -->
+        <rect x="2" y="9" width="10" height="6" fill="#f0f4ff"/>
+        <rect x="2" y="9" width="2" height="1" fill="#b8d8f4"/>
+        <rect x="10" y="9" width="2" height="1" fill="#b8d8f4"/>
+        <!-- LEFT ARM (raised — jumping pose) -->
+        <rect x="0" y="8" width="2" height="5" fill="#f0f4ff"/>
+        <rect x="0" y="7" width="2" height="2" fill="#c8dcf0"/>
+        <!-- RIGHT ARM -->
+        <rect x="12" y="8" width="2" height="5" fill="#f0f4ff"/>
+        <rect x="12" y="7" width="2" height="2" fill="#c8dcf0"/>
+        <!-- CLOUD LOGO (SF) on chest -->
+        <rect x="4" y="10" width="6" height="4" fill="#032D60"/>
+        <rect x="5" y="10" width="4" height="1" fill="#00A1E0"/>
+        <rect x="4" y="11" width="6" height="2" fill="#00A1E0"/>
+        <rect x="5" y="13" width="1" height="1" fill="#00A1E0"/>
+        <rect x="8" y="13" width="1" height="1" fill="#00A1E0"/>
+        <!-- LEGS -->
+        <rect x="3" y="15" width="3" height="1" fill="#f0f4ff"/>
+        <rect x="8" y="15" width="3" height="1" fill="#f0f4ff"/>
+      </svg>
+      <div class="robot-shadow"></div>
+    </div>
+  </div>
+
+  <!-- Step description -->
+  <div class="step-desc">
+    <h4 id="sdTitle">Preparando simulación…</h4>
+    <p id="sdSub">El flujo comenzará en un momento</p>
+  </div>
+
+  <!-- JSON Panel -->
+  <div class="json-panel">
+    <div class="jp-header">
+      <span class="jp-tag" id="jpTag" style="background:rgba(0,61,165,.3);color:#79c0ff;border:1px solid rgba(0,61,165,.5)">PASO A</span>
+      <span class="jp-title" id="jpTitle">Canal digital — solicitud entrante</span>
+      <span class="jp-dir" id="jpDir">telmex.com</span>
+    </div>
+    <div class="jp-body" id="jpBody"></div>
+  </div>
+
+  <div class="sim-status" id="simStatus">Iniciando flujo de integración…</div>
+  <div class="replay-wrap">
+    <button class="replay-btn" id="replayBtn" onclick="startSim()">↺ Repetir simulación</button>
+  </div>
+</section>
+
+<!-- TMF INFO BAR -->
+<div class="tmf-bar" id="tmfBar">
+  <span class="tmf-chip chip-tmf">TMF 620</span>
+  <span class="tmf-path"><span class="tmf-mth">GET</span> /tmf-api/productCatalogManagement/v4/catalog/TMX_CAT_PAQUETESINFINITUM</span>
+  <span style="color:rgba(255,255,255,.2)">→</span>
+  <span class="tmf-chip chip-sdc">SDC API</span>
+  <span class="tmf-path"><span class="tmf-mth">GET</span> /v3/catalogs/TMX_CAT_PAQUETESINFINITUM</span>
+  <span style="margin-left:auto;color:rgba(255,255,255,.3);font-family:monospace;font-size:10px">contextKey: 99914b932bd37a50b983c5e7c90ae93b</span>
+  <span class="tmf-ok">✓ 200 OK · 6 offers</span>
+</div>
+
+<!-- CATALOG -->
+<section class="cat-section" id="catSection">
+  <div class="cat-banner">
+    <div class="banner-logo">infinitum<span class="vel">Exceso de Velocidad</span></div>
+    <div class="banner-right">
+      <h3>Aumentamos la velocidad de los paquetes.</h3>
+      <p>¡Lo hicimos de nuevo!</p>
+    </div>
+  </div>
+  <div class="cat-body">
+    <div class="cat-tabs">
+      <button class="cat-tab active" id="tabTel" onclick="switchTab('tel')">Telefonía e Internet</button>
+      <button class="cat-tab" id="tabNet" onclick="switchTab('net')">Solo Internet</button>
+    </div>
+    <h2 class="cat-heading">Paquetes Infinitum</h2>
+    <p class="cat-sub">Elige el paquete que mejor se adapte a tus necesidades</p>
+    <div class="offers-list" id="offersList"></div>
+    <div class="svc-bar">
+      <p>
+        <span class="svc-name r">Claro video</span> y
+        <span class="svc-name">Llamadas ilimitadas</span> ·
+        <span class="svc-name">McAfee Antivirus</span> ·
+        <span class="svc-name">Claro Drive</span> ·
+        <span class="svc-name">Infinitum Mail</span>
+        <br><span style="font-size:11px;color:#999;margin-top:3px;display:block">Incluido en todos los Paquetes.</span>
+      </p>
+    </div>
+  </div>
+  <div class="cat-footer">
+    <p>Precios con impuestos incluidos. La velocidad de conexión puede variar según el área y equipo.</p>
+    <p class="leyenda">PoC — Datos reales SDC API · Salesforce Communications Cloud · Catálogo: TMX_CAT_PAQUETESINFINITUM · Estándar TMF 620 v4 · 6 ofertas activas</p>
+  </div>
+</section>
+
+<script>
+/* ===== CATALOG DATA (from testJson.json — SDC API Salesforce) ===== */
+const OFFERS = [
+  {name:"Infinitum 399",price:399,speed:300,drive:"100 GB",code:"OFF_TMX_INFINITUM_399",billing:"PFR34",hot:false},
+  {name:"Infinitum 449",price:449,speed:400,drive:"200 GB",code:"OFF_TMX_INFINITUM_449",billing:"PFRA5",hot:false},
+  {name:"Infinitum 499",price:499,speed:500,drive:"200 GB",code:"OFF_TMX_INFINITUM_499",billing:"PFRA7",hot:false},
+  {name:"Infinitum 549",price:549,speed:600,drive:"200 GB",code:"OFF_TMX_INFINITUM_549",billing:"PFR18",hot:true},
+  {name:"Infinitum 649",price:649,speed:800,drive:"200 GB",code:"OFF_TMX_INFINITUM_649",billing:"PFRA8",hot:false},
+  {name:"Infinitum 899",price:899,speed:1000,drive:"400 GB",code:"OFF_TMX_INFINITUM_899",billing:"PFR56",hot:false},
+];
+
+/* ===== STEPS ===== */
+const STEPS = [
+  {
+    id:"A",lbl:"Origen",
+    title:"Canal Digital — Solicitud entrante",
+    sub:"telmex.com inicia la solicitud del catálogo Infinitum vía TMF 620",
+    dir:"telmex.com",
+    tagStyle:"background:rgba(0,61,165,.3);color:#79c0ff;border:1px solid rgba(0,61,165,.5)",
+    glows:["bwTmx"], pkt:null,
+    json:`<span class="jm">GET</span> <span class="ju">/tmf-api/productCatalogManagement/v4/catalog/TMX_CAT_PAQUETESINFINITUM</span>
+<span class="jh">Host:</span> <span class="jv">api.telmex.com</span>
+<span class="jh">Accept:</span> <span class="jv">application/json</span>
+<span class="jh">X-Channel:</span> <span class="jv">telmex.com</span>
+<span class="jh">X-Correlation-Id:</span> <span class="jv">req-20261008-tmx-001</span>
+<span class="jh">Authorization:</span> <span class="jv">Bearer {token}</span>
+
+<span class="jc">// Catálogo principal de Paquetes Infinitum</span>
+<span class="jc">// Estándar: TM Forum Open API TMF 620 — Product Catalog Management v4</span>`
+  },
+  {
+    id:"B",lbl:"TMF 620",
+    title:"Request TMF 620 → MuleSoft",
+    sub:"Payload TMF 620 enviado al middleware para orquestación y traducción",
+    dir:"telmex.com → MuleSoft",
+    tagStyle:"background:rgba(0,61,165,.3);color:#79c0ff;border:1px solid rgba(0,61,165,.5)",
+    glows:["bwTmx","bwMule"], pkt:{id:"pf1",fwd:true},
+    json:`<span class="jp_">{</span>
+  <span class="jk">"method"</span><span class="jp_">:</span> <span class="jm">"GET"</span><span class="jp_">,</span>
+  <span class="jk">"endpoint"</span><span class="jp_">:</span> <span class="ju">"/tmf-api/productCatalogManagement/v4/catalog/TMX_CAT_PAQUETESINFINITUM"</span><span class="jp_">,</span>
+  <span class="jk">"standard"</span><span class="jp_">:</span> <span class="jv">"TMF 620 v4"</span><span class="jp_">,</span>
+  <span class="jk">"id"</span><span class="jp_">:</span> <span class="jv">"TMX_CAT_PAQUETESINFINITUM"</span><span class="jp_">,</span>
+  <span class="jk">"headers"</span><span class="jp_">: {</span>
+    <span class="jk">"Accept"</span><span class="jp_">:</span> <span class="jv">"application/json"</span><span class="jp_">,</span>
+    <span class="jk">"X-Channel"</span><span class="jp_">:</span> <span class="jv">"telmex.com"</span>
+  <span class="jp_">},</span>
+  <span class="jk">"@type"</span><span class="jp_">:</span> <span class="jv">"CatalogRequest"</span><span class="jp_">,</span>
+  <span class="jk">"catalogType"</span><span class="jp_">:</span> <span class="jv">"ProductCatalog"</span>
+<span class="jp_">}</span>
+<span class="jc">// MuleSoft recibe · valida TMF 620 · traduce a SDC API Salesforce</span>`
+  },
+  {
+    id:"C",lbl:"SDC API",
+    title:"Traducción → SDC API Salesforce",
+    sub:"MuleSoft transforma el payload TMF 620 al formato DC API de Salesforce",
+    dir:"MuleSoft → Salesforce SDC",
+    tagStyle:"background:rgba(0,181,226,.2);color:#00d4f5;border:1px solid rgba(0,181,226,.4)",
+    glows:["bwMule","bwSF"], pkt:{id:"pf2",fwd:true},
+    json:`<span class="jm">GET</span> <span class="ju">/v3/catalogs/TMX_CAT_PAQUETESINFINITUM</span>
+<span class="jh">Host:</span> <span class="jv">telmex.my.salesforce.com</span>
+<span class="jh">Authorization:</span> <span class="jv">Bearer {SF_JWT_TOKEN}</span>
+<span class="jh">Content-Type:</span> <span class="jv">application/json</span>
+<span class="jh">X-MuleSoft-CorrelationId:</span> <span class="jv">req-20261008-tmx-001</span>
+
+<span class="jc">// Salesforce SDC (Digital Commerce) · Communications Cloud</span>
+<span class="jc">// vlocity_cmt · Catálogo: TMX_CAT_PAQUETESINFINITUM</span>
+<span class="jc">// Traducción realizada por MuleSoft Anypoint Platform</span>`
+  },
+  {
+    id:"D",lbl:"Response",
+    title:"SDC API Response → MuleSoft",
+    sub:"Salesforce responde con el catálogo en formato SDC — 6 ofertas activas",
+    dir:"Salesforce → MuleSoft",
+    tagStyle:"background:rgba(0,161,224,.2);color:#a5d6ff;border:1px solid rgba(0,161,224,.4)",
+    glows:["bwSF","bwMule"], pkt:{id:"pb2",fwd:false},
+    json:`<span class="jp_">{</span>
+  <span class="jk">"contextKey"</span><span class="jp_">:</span> <span class="jv">"99914b932bd37a50b983c5e7c90ae93b"</span><span class="jp_">,</span>
+  <span class="jk">"offers"</span><span class="jp_">: [</span> <span class="jc">// 6 ofertas activas (vlocity_cmt__IsOrderable__c: true)</span>
+    <span class="jp_">{</span> <span class="jk">"Name"</span><span class="jp_">:</span> <span class="jv">"Infinitum 399"</span><span class="jp_">,</span> <span class="jk">"ProductCode"</span><span class="jp_">:</span> <span class="jv">"OFF_TMX_INFINITUM_399"</span><span class="jp_">,</span>
+      <span class="jk">"priceResult"</span><span class="jp_">:[{</span><span class="jk">"chargeamount"</span><span class="jp_">:</span><span class="jn">399</span><span class="jp_">,</span><span class="jk">"ChargeType__c"</span><span class="jp_">:</span><span class="jv">"Recurring"</span><span class="jp_">}],</span>
+      <span class="jk">"vlocity_cmt__IsOrderable__c"</span><span class="jp_">:</span><span class="jb">true</span><span class="jp_">,</span><span class="jk">"IsActive"</span><span class="jp_">:</span><span class="jb">true</span><span class="jp_">,</span><span class="jk">"ATT_CODIGO_FACTURACION"</span><span class="jp_">:</span><span class="jv">"PFR34"</span> <span class="jp_">},</span>
+    <span class="jc">// ... Infinitum 449 (PFRA5) · 499 (PFRA7) · 549 (PFR18) · 649 (PFRA8) · 899 (PFR56)</span>
+  <span class="jp_">]</span>
+<span class="jp_">}</span>
+<span class="jc">// HTTP 200 OK · 6 offers · contextKey generado por sesión SDC</span>`
+  },
+  {
+    id:"E",lbl:"Catálogo",
+    title:"Traducción TMF 620 + Renderizado",
+    sub:"MuleSoft traduce la respuesta SDC a TMF 620 · telmex.com renderiza el catálogo",
+    dir:"MuleSoft → telmex.com ✓",
+    tagStyle:"background:rgba(86,211,100,.15);color:#56d364;border:1px solid rgba(86,211,100,.4)",
+    glows:["bwMule","bwTmx"], pkt:{id:"pb1",fwd:false},
+    json:`<span class="jp_">{</span>
+  <span class="jk">"id"</span><span class="jp_">:</span> <span class="jv">"TMX_CAT_PAQUETESINFINITUM"</span><span class="jp_">,</span>
+  <span class="jk">"href"</span><span class="jp_">:</span> <span class="ju">"https://api.telmex.com/tmf-api/productCatalogManagement/v4/catalog/TMX_CAT_PAQUETESINFINITUM"</span><span class="jp_">,</span>
+  <span class="jk">"name"</span><span class="jp_">:</span> <span class="jv">"Catálogo de Paquetes Infinitum"</span><span class="jp_">,</span>
+  <span class="jk">"catalogType"</span><span class="jp_">:</span> <span class="jv">"ProductCatalog"</span><span class="jp_">,</span>
+  <span class="jk">"version"</span><span class="jp_">:</span> <span class="jv">"2.5"</span><span class="jp_">,</span>
+  <span class="jk">"lifecycleStatus"</span><span class="jp_">:</span> <span class="jl">"Active"</span><span class="jp_">,</span>
+  <span class="jk">"lastUpdate"</span><span class="jp_">:</span> <span class="jv">"2026-10-08T08:30:00.000Z"</span><span class="jp_">,</span>
+  <span class="jk">"validFor"</span><span class="jp_">: {</span><span class="jk">"startDateTime"</span><span class="jp_">:</span><span class="jv">"2026-01-01T00:00:00.000Z"</span><span class="jp_">,</span><span class="jk">"endDateTime"</span><span class="jp_">:</span><span class="jv">"2099-12-31T23:59:59.000Z"</span><span class="jp_">},</span>
+  <span class="jk">"category"</span><span class="jp_">: [</span>
+    <span class="jp_">{</span><span class="jk">"id"</span><span class="jp_">:</span><span class="jv">"CAT_FIBRA_RESIDENCIAL"</span><span class="jp_">,</span><span class="jk">"name"</span><span class="jp_">:</span><span class="jv">"Infinitum Fibra Óptica"</span><span class="jp_">,</span><span class="jk">"@type"</span><span class="jp_">:</span><span class="jv">"CategoryRef"</span><span class="jp_">},</span>
+    <span class="jp_">{</span><span class="jk">"id"</span><span class="jp_">:</span><span class="jv">"CAT_ENTRETENIMIENTO_STREAMING"</span><span class="jp_">,</span><span class="jk">"name"</span><span class="jp_">:</span><span class="jv">"Entretenimiento y Streaming"</span><span class="jp_">,</span><span class="jk">"@type"</span><span class="jp_">:</span><span class="jv">"CategoryRef"</span><span class="jp_">}</span>
+  <span class="jp_">],</span>
+  <span class="jk">"relatedParty"</span><span class="jp_">:[{</span><span class="jk">"id"</span><span class="jp_">:</span><span class="jv">"ORG_TELMEX_MEXICO"</span><span class="jp_">,</span><span class="jk">"name"</span><span class="jp_">:</span><span class="jv">"Telmex"</span><span class="jp_">,</span><span class="jk">"role"</span><span class="jp_">:</span><span class="jv">"Owner"</span><span class="jp_">}],</span>
+  <span class="jk">"@type"</span><span class="jp_">:</span><span class="jv">"Catalog"</span><span class="jp_">,</span><span class="jk">"@baseType"</span><span class="jp_">:</span><span class="jv">"Catalog"</span>
+<span class="jp_">}</span>
+<span class="jc">// ✅ TMF 620 v4 válido · lifecycleStatus · validFor · category[] · relatedParty[]</span>
+<span class="jc">// ℹ  ProductOffering: GET /productOffering?catalog.id=TMX_CAT_PAQUETESINFINITUM</span>`
+  }
+];
+
+/* ===== STEP ROW ===== */
+function renderStepRow() {
+  const r = document.getElementById('stepRow');
+  let h = '';
+  STEPS.forEach((s, i) => {
+    if (i) h += `<div class="step-conn" id="sc${i}"></div>`;
+    h += `<div class="step-dot" id="sd${i}" onclick="jumpStep(${i})">
+      <div class="step-circle">${s.id}</div>
+      <div class="step-lbl">${s.lbl}</div>
+    </div>`;
+  });
+  r.innerHTML = h;
+}
+
+/* ===== SIMULATION ===== */
+let cur = -1, timer = null, running = false;
+
+function startSim() {
+  if (running) return;
+  document.getElementById('replayBtn').classList.remove('show');
+  document.getElementById('catSection').classList.remove('show');
+  document.getElementById('tmfBar').style.display = 'none';
+  STEPS.forEach((_,i) => {
+    const d = document.getElementById(`sd${i}`);
+    d.classList.remove('active','done');
+    const c = document.getElementById(`sc${i}`);
+    if (c) c.classList.remove('lit');
+  });
+  resetGlows(); cur = -1; running = true; advance();
+}
+
+function resetGlows() {
+  ['bwTmx','bwMule','bwSF'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('glow-tmx','glow-mule','glow-sf','done-b');
+  });
+}
+
+function positionRobot(glows) {
+  if (!glows || !glows.length) return;
+  const wrap = document.getElementById('robotWrap');
+  const stage = document.getElementById('robotStage');
+  const theater = document.querySelector('.theater');
+  const targetBlock = document.getElementById(glows[0]);
+  if (!wrap || !theater || !targetBlock) return;
+
+  const asm = targetBlock.querySelector('.block-asm');
+  const asmRect = asm.getBoundingClientRect();
+  const theaterRect = theater.getBoundingClientRect();
+  const stageRect = stage.getBoundingClientRect();
+
+  // Center of block assembly relative to the robotStage
+  const centerX = asmRect.left - stageRect.left + asmRect.width / 2;
+  // Position robot so its bottom aligns with top of block assembly (above .b-top face)
+  const topY = asmRect.top - stageRect.top - 64; // 55px robot + 9px gap
+
+  wrap.style.left = centerX + 'px';
+  wrap.style.top = Math.max(topY, 2) + 'px';
+  wrap.style.transform = 'translateX(-50%)';
+
+  // Trigger jump animation
+  wrap.classList.remove('jumping','celebrating');
+  void wrap.offsetWidth;
+  wrap.classList.add('jumping');
+}
+
+const GLOW_MAP = {bwTmx:'glow-tmx', bwMule:'glow-mule', bwSF:'glow-sf'};
+
+function advance() {
+  cur++;
+  if (cur >= STEPS.length) { finish(); return; }
+  jumpStep(cur);
+  timer = setTimeout(advance, 2500);
+}
+
+function jumpStep(idx) {
+  const s = STEPS[idx];
+  if (!s) return;
+
+  STEPS.forEach((_,i) => {
+    const d = document.getElementById(`sd${i}`);
+    d.classList.remove('active','done');
+    if (i < idx) d.classList.add('done');
+    if (i === idx) d.classList.add('active');
+    const c = document.getElementById(`sc${i}`);
+    if (c) { c.classList.remove('lit'); if (i <= idx) c.classList.add('lit'); }
+  });
+
+  resetGlows();
+  positionRobot(s.glows);
+  s.glows.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && GLOW_MAP[id]) el.classList.add(GLOW_MAP[id]);
+  });
+
+  // Arrow highlights
+  ['ac1','ac2'].forEach(id => document.getElementById(id).classList.remove('lit'));
+  if (s.id === 'B' || s.id === 'C') {
+    document.getElementById(s.id === 'B' ? 'ac1' : 'ac2').classList.add('lit');
+    document.getElementById(s.id === 'B' ? 'af1' : 'af2').classList.add('lit');
+  }
+  if (s.id === 'D' || s.id === 'E') {
+    document.getElementById(s.id === 'D' ? 'ac2' : 'ac1').classList.add('lit');
+    document.getElementById(s.id === 'D' ? 'ab2' : 'ab1').classList.add('lit');
+  }
+
+  // Fire packet
+  if (s.pkt) {
+    const p = document.getElementById(s.pkt.id);
+    if (p) {
+      p.classList.remove('go-fwd','go-bwd');
+      void p.offsetWidth;
+      p.classList.add(s.pkt.fwd ? 'go-fwd' : 'go-bwd');
+    }
+  }
+
+  // JSON panel
+  document.getElementById('jpTag').textContent = `PASO ${s.id}`;
+  document.getElementById('jpTag').style.cssText = s.tagStyle;
+  document.getElementById('jpTitle').textContent = s.title;
+  document.getElementById('jpDir').textContent = s.dir;
+  const body = document.getElementById('jpBody');
+  body.style.opacity = '0';
+  setTimeout(() => { body.innerHTML = s.json; body.style.opacity = '1'; }, 160);
+
+  // Description
+  document.getElementById('sdTitle').textContent = `Paso ${s.id}: ${s.title}`;
+  document.getElementById('sdSub').textContent = s.sub;
+
+  // Status
+  const stat = ['Iniciando desde canal digital…','Enviando solicitud TMF 620…','MuleSoft traduce → llama SDC API…','Salesforce procesa y responde…','✓ TMF 620 traducido — catálogo listo'];
+  document.getElementById('simStatus').textContent = stat[idx] || '';
+}
+
+function celebrate() {
+  const wrap = document.getElementById('robotWrap');
+  const stage = document.getElementById('robotStage');
+  if (!wrap || !stage) return;
+
+  // Trigger celebration animation on robot
+  wrap.classList.remove('jumping');
+  wrap.classList.add('celebrating');
+
+  // Confetti burst
+  const colors = ['#FFB800','#E30613','#003DA5','#00B5E2','#00A1E0','#56d364','#fff','#ff79c6'];
+  const wRect = wrap.getBoundingClientRect();
+  const sRect = stage.getBoundingClientRect();
+  const cx = wRect.left - sRect.left + wRect.width / 2;
+  const cy = wRect.top  - sRect.top  + wRect.height / 2;
+
+  for (let i = 0; i < 28; i++) {
+    const pix = document.createElement('div');
+    pix.className = 'confetti-pix';
+    pix.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i % colors.length]};transform:translate(-50%,-50%)`;
+    stage.appendChild(pix);
+    const angle = (i / 28) * 360 + Math.random() * 20;
+    const dist  = 60 + Math.random() * 80;
+    const dx = Math.cos(angle * Math.PI / 180) * dist;
+    const dy = Math.sin(angle * Math.PI / 180) * dist - 20;
+    requestAnimationFrame(() => {
+      pix.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${angle * 2}deg)`;
+      pix.style.opacity = '0';
+    });
+    setTimeout(() => pix.remove(), 1000);
+  }
+
+  // Second burst after 600ms
+  setTimeout(() => {
+    for (let i = 0; i < 18; i++) {
+      const pix = document.createElement('div');
+      pix.className = 'confetti-pix';
+      pix.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[(i + 3) % colors.length]};transform:translate(-50%,-50%);width:5px;height:5px`;
+      stage.appendChild(pix);
+      const angle = (i / 18) * 360 + Math.random() * 15;
+      const dist  = 40 + Math.random() * 60;
+      const dx = Math.cos(angle * Math.PI / 180) * dist;
+      const dy = Math.sin(angle * Math.PI / 180) * dist - 30;
+      requestAnimationFrame(() => {
+        pix.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${angle}deg)`;
+        pix.style.opacity = '0';
+      });
+      setTimeout(() => pix.remove(), 900);
+    }
+  }, 600);
+}
+
+function finish() {
+  running = false;
+  document.getElementById('simStatus').textContent = '✓ Flujo completado — catálogo renderizado a continuación';
+  document.getElementById('replayBtn').classList.add('show');
+  STEPS.forEach((_,i) => {
+    document.getElementById(`sd${i}`).classList.replace('active','done');
+  });
+  resetGlows();
+  celebrate();
+  setTimeout(() => {
+    const bar = document.getElementById('tmfBar');
+    bar.style.display = 'flex';
+    const cat = document.getElementById('catSection');
+    cat.classList.add('show');
+    setTimeout(() => cat.scrollIntoView({behavior:'smooth',block:'start'}), 100);
+  }, 800);
+}
+
+/* ===== CATALOG ===== */
+function renderCatalog() {
+  const sorted = [...OFFERS].sort((a,b) => a.price - b.price);
+  document.getElementById('offersList').innerHTML = sorted.map(o => {
+    const isgbps = o.speed >= 1000;
+    const spdNum = isgbps ? '1,000' : o.speed.toString();
+    const spdUnit = isgbps ? 'Megas / 1&nbsp;Gbps' : 'megas';
+    return `<div class="offer-row${o.hot?' hot':''}">
+      <div class="speed-area">
+        <span class="spd-prefix">Hasta</span>
+        <span class="spd-num">${spdNum}</span>
+        <span class="spd-unit">${spdUnit}</span>
+        <span class="spd-desc">de subida y<br>de bajada</span>
+        ${o.hot ? '<span class="hot-tag">MÁS POPULAR</span>' : ''}
+      </div>
+      <div class="price-area">
+        <div class="price-lbl">desde</div>
+        <div class="price-amt">$${o.price}</div>
+        <div class="price-per">/mes c/impuestos</div>
+      </div>
+      <div class="offer-cta">
+        <button class="cta-btn" onclick="selectOffer('${o.code}')">Dar clic aquí</button>
+        <div class="offer-code">${o.code}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(t) {
+  document.getElementById('tabTel').classList.toggle('active', t==='tel');
+  document.getElementById('tabNet').classList.toggle('active', t==='net');
+}
+
+function selectOffer(code) {
+  const o = OFFERS.find(x => x.code === code);
+  if (!o) return;
+  const spd = o.speed >= 1000 ? '1 Gbps' : o.speed + ' Megas';
+  alert(`${o.name}\n\nVelocidad: ${spd}\nPrecio: $${o.price}/mes\nClaro Drive: ${o.drive}\nCódigo de facturación: ${o.billing}\n\n[En producción → TMF 622 Order Management vía MuleSoft]`);
+}
+
+/* ===== INIT ===== */
+renderStepRow();
+renderCatalog();
+setTimeout(startSim, 900);
+</script>
+</body>
+</html>

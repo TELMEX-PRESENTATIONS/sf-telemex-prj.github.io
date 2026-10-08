@@ -187,9 +187,9 @@ a:hover{text-decoration:underline}
     <li><a href="#sec-curp">Omnicanalidad — Resolución de Identidad por CURP</a></li>
     <li><a href="#sec-journey">Visión Funcional — User Journey por Pantallas</a></li>
     <li><a href="#sec-opts">Visión Técnica — Opción 1 vs Opción 2 (flujos detallados)</a></li>
-    <li><a href="#sec-arquitectura">Diagrama de Arquitectura General</a></li>
     <li><a href="#sec-tmf">Arquitectura TMF LEGO — Ejemplo Práctico TMF 699</a></li>
     <li><a href="#sec-live">En Vivo — Paso a Paso por Opción</a></li>
+    <li><a href="#sec-impl-tmf620">Diseño de Implementación MuleSoft — TMF 620</a></li>
     <li><a href="#sec-variables">Variables y Sugerencias Out-of-the-Box</a></li>
   </ol>
 </div>
@@ -326,16 +326,41 @@ a:hover{text-decoration:underline}
       <span class="diagram-badge">Sequence · Omnicanalidad</span>
     </div>
     <div class="diagram-iframe-wrap" style="padding-bottom:55%">
-      <iframe src="sequence-curp-identity.html" title="CURP Identity Resolution" loading="lazy" allow="fullscreen"></iframe>
+      <iframe src="./curp-identity.html" title="CURP Identity Resolution" loading="lazy" allow="fullscreen"></iframe>
     </div>
   </div>
-  <a class="diagram-open-btn" href="sequence-curp-identity.html" target="_blank">
+  <a class="diagram-open-btn" href="./curp-identity.html" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
     Abrir secuencia CURP a pantalla completa
   </a>
 
   <div class="note" style="margin-top:16px">
     <strong>Redirect URL Cliente Activo:</strong> Origen: <code>telmex.com/web/contrata/lineas-nuevas</code> → Destino: <code>loginsso.telmex.com/nidp/idff/sso → mitelmex.com/web/mitelmex-hogar/home</code>
+  </div>
+
+  <hr style="border:none;border-top:1px solid var(--grid);margin:28px 0">
+
+  <div class="section-label" style="margin-bottom:8px">Omnicanalidad a nivel de Orden</div>
+  <p style="font-size:.875rem;color:var(--ink2);margin-bottom:16px">La omnicanalidad no termina en el Lead — se extiende a la <strong>Orden de Venta</strong>. El objetivo es crear la Orden de manera temprana (antes de confirmar el pago), de modo que si el cliente abandona el flujo, cualquier canal pueda retomar la atención con la información completa.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+    <div style="background:var(--s1);border:1px solid var(--grid);border-left:4px solid var(--c4);border-radius:var(--radius);padding:18px">
+      <div style="font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--c4);margin-bottom:8px">Estado inicial — Pre-pago</div>
+      <p style="font-size:.8rem;line-height:1.55;color:var(--ink2)">La Orden se crea en el paso de <strong>Domiciliación</strong> (antes del pago). Estado sugerido: <code>"Pagos y Entrega"</code> con el flag <code>TMX_VNT_Domiciliacion__c = false</code>. El carrito está configurado con paquete + entretenimiento elegido.</p>
+      <div style="margin-top:8px;font-size:.75rem;color:var(--ink3)">💡 Valor: si el cliente abandona aquí, la Orden ya existe en SF con toda la configuración — el agente del canal físico la ve y puede completar la venta.</div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--grid);border-left:4px solid var(--c3);border-radius:var(--radius);padding:18px">
+      <div style="font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--c3);margin-bottom:8px">Estado final — Post-pago exitoso</div>
+      <p style="font-size:.8rem;line-height:1.55;color:var(--ink2)">Al confirmar el pago en la Thank You Page, se ejecuta un <strong>UPDATE de la Orden existente</strong>. Estado: <code>"En Aprovisionamiento"</code> con el flag <code>TMX_VNT_Domiciliacion__c = true</code>. Salesforce dispara el proceso de provisioning.</p>
+      <div style="margin-top:8px;font-size:.75rem;color:var(--ink3)">💡 Esto aplica igual para Opción 1 y Opción 2 — la diferencia es cómo se construye el carrito, no cuándo se crea la Orden.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-icon">🔗</div>
+    <div class="callout-body">
+      <strong>El leadId como hilo conductor:</strong> El <code>leadId</code> generado en la resolución CURP acompaña TODA la transacción — Lead → Orden (pre-pago) → Orden actualizada (post-pago) → Asset (provisioning). Cualquier canal (web, físico, telefónico) puede identificar al cliente y el estado de su proceso con este ID único.
+    </div>
   </div>
 </div>
 
@@ -349,8 +374,19 @@ a:hover{text-decoration:underline}
 
   <!-- OPT 1 -->
   <div class="step-badge">Opción 1</div>
-  <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:8px;color:var(--opt1)">SDC APIs vía MuleSoft + Catálogo TMF 620 Cacheado</h3>
-  <p style="font-size:.875rem;color:var(--ink2);margin-bottom:16px">El catálogo se obtiene vía SDC API en un job batch cada 24h y se cachea en MuleSoft como TMF 620 — la carga del HOME no genera llamadas en tiempo real. El canal siempre habla con MuleSoft en estándares TMF. MuleSoft traduce internamente a SDC APIs de Salesforce. Las reglas de promo se obtienen en un paso posterior separado. El basket y la orden se gestionan en tiempo real vía SDC APIs a través de MuleSoft.</p>
+  <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:8px;color:var(--opt1)">Standard Digital Commerce (SDC) APIs — Motor OOB de Salesforce</h3>
+  <p style="font-size:.875rem;color:var(--ink2);margin-bottom:12px">El catálogo se cachea en MuleSoft (batch 24h via SDC). El motor de reglas, pricing y lógica del carrito recae <strong>completamente en Salesforce</strong> usando las SDC APIs optimizadas para e-commerce. El canal no construye el carrito — lo delega a Salesforce via MuleSoft.</p>
+
+  <div style="background:var(--s2);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px">
+    <div style="font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c1);margin-bottom:10px">Flujo SDC APIs — Secuencia estándar documentada por Salesforce</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--ink2)">
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(57,135,229,.2);color:var(--c1);padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">1</span><div><strong>GET</strong> <code>/v3/catalogs/{catalogcode}/offers</code> — ofertas elegibles desde caché MuleSoft</div></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(57,135,229,.2);color:var(--c1);padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">2</span><div><strong>GET</strong> <code>/v3/catalogs/{catalogcode}/offers/{offercode}</code> — detalle de la oferta seleccionada (en tiempo real SF)</div></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(57,135,229,.2);color:var(--c1);padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">3</span><div><strong>POST</strong> <code>/v3/catalogs/{catalogcode}/basket</code> — ejecuta Vlocity CPQ pricing services, devuelve <code>basketKey</code> con pricing exacto</div></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(57,135,229,.2);color:var(--c1);padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">4</span><div><strong>POST</strong> <code>/v3/carts</code> — crea la Orden en Salesforce usando el basketKey · Estado: <code>"Pagos y Entrega"</code> · <code>TMX_VNT_Domiciliacion__c = false</code></div></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(25,158,112,.2);color:var(--c3);padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">✓</span><div><strong>UPDATE Order</strong> post-pago exitoso → Estado: <code>"En Aprovisionamiento"</code> · <code>TMX_VNT_Domiciliacion__c = true</code></div></div>
+    </div>
+  </div>
 
   <div class="pc-grid">
     <div class="pc-card pc-pros">
@@ -381,10 +417,10 @@ a:hover{text-decoration:underline}
       <span class="diagram-badge" style="background:var(--opt1)">Sequence · Opt 1</span>
     </div>
     <div class="diagram-iframe-wrap" style="padding-bottom:55%">
-      <iframe src="sequence-option1-sdcapi.html" title="Opción 1 SDC API" loading="lazy" allow="fullscreen"></iframe>
+      <iframe src="./option1-sdcapi.html" title="Opción 1 SDC API" loading="lazy" allow="fullscreen"></iframe>
     </div>
   </div>
-  <a class="diagram-open-btn" href="sequence-option1-sdcapi.html" target="_blank">
+  <a class="diagram-open-btn" href="./option1-sdcapi.html" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
     Abrir secuencia Opción 1 a pantalla completa
   </a>
@@ -393,11 +429,21 @@ a:hover{text-decoration:underline}
 
   <!-- OPT 2 -->
   <div class="step-badge" style="margin-top:0;background:color-mix(in srgb,var(--opt2) 15%,transparent);color:var(--opt2)">Opción 2</div>
-  <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:8px;color:var(--opt2)">DC API Batch + Caché LEGO — El Canal Procesa la Lógica</h3>
-  <p style="font-size:.875rem;color:var(--ink2);margin-bottom:12px">El catálogo y las <strong>reglas de promoción</strong> (ej. paquete $389 200MB + domiciliación = Netflix 6 meses gratis) se obtienen vía DC API en un job batch cada 24h y se cachean en MuleSoft. El canal digital recibe los datos en crudo y <strong>procesa la lógica de promociones localmente</strong>. Solo TMF 622 (Submit Order) genera una llamada online a Salesforce.</p>
+  <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:8px;color:var(--opt2)">Híbrido Custom — Matriz en Canal + TMF 622 Submit Order</h3>
+  <p style="font-size:.875rem;color:var(--ink2);margin-bottom:12px">El catálogo y la <strong>matriz de reglas de promoción y entretenimiento</strong> se obtienen vía SDC API en batch 24h y se cachean en MuleSoft. El <strong>Canal Digital es el encargado de armar el carrito internamente</strong> aplicando esta matriz. La orden final se envía mediante <strong>TMF 622 Submit Order (custom)</strong>.</p>
+
+  <div style="background:var(--s2);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px">
+    <div style="font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c3);margin-bottom:10px">Flujo Híbrido — Canal construye el carrito</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--ink2)">
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(99,102,241,.2);color:#6366f1;padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">BATCH</span><div><strong>GET</strong> <code>/v3/catalogs/{code}/offers</code> + SOQL promos → MuleSoft cachea catálogo + matriz de reglas (24h)</div></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(25,158,112,.2);color:var(--c3);padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">CANAL</span><div>El Canal Digital descarga la matriz del caché y <strong>arma el carrito internamente</strong> — aplica reglas de elegibilidad y promociones de forma autónoma (ej. paquete $389 + domiciliar → Netflix gratis)</div></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(25,158,112,.2);color:var(--c3);padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">TMF</span><div><strong>POST TMF 622 Submit Order</strong> → MuleSoft → SF Core crea la Orden con el carrito enviado por el canal · Estado: <code>"Pagos y Entrega"</code> · <code>TMX_VNT_Domiciliacion__c = false</code></div></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="background:rgba(25,158,112,.2);color:var(--c3);padding:1px 7px;border-radius:99px;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:2px">✓</span><div><strong>UPDATE Order</strong> post-pago exitoso → Estado: <code>"En Aprovisionamiento"</code> · <code>TMX_VNT_Domiciliacion__c = true</code></div></div>
+    </div>
+  </div>
   <div class="callout callout-info" style="margin-bottom:16px">
-    <div class="callout-icon">🧩</div>
-    <div class="callout-body"><strong>Ejemplo de regla de promo:</strong> Salesforce tiene en el catálogo: <em>"Si paquete_precio=389 AND canal=DIGITAL AND evento=domiciliacion → añadir ProductOffering Netflix_6M gratis"</em>. MuleSoft expone esta regla al canal. El canal la evalúa cuando el cliente domicilia y agrega Netflix automáticamente al carrito — sin consultar Salesforce en ese momento.</div>
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body"><strong>Consideración clave:</strong> El Canal Digital asume la responsabilidad del motor de reglas de la matriz (qué promociones aplican, qué entretenimiento es elegible). Esta lógica hoy vive en Salesforce (Apex + CPQ) — la migración a una matriz exportable es el componente de mayor esfuerzo de esta opción. La arquitectura LEGO garantiza que si las reglas cambian en SF, solo se actualiza el batch 24h.</div>
   </div>
 
   <div class="pc-grid">
@@ -430,10 +476,10 @@ a:hover{text-decoration:underline}
       <span class="diagram-badge" style="background:var(--opt2)">Sequence · Opt 2</span>
     </div>
     <div class="diagram-iframe-wrap" style="padding-bottom:55%">
-      <iframe src="sequence-option2-async.html" title="Opción 2 Async" loading="lazy" allow="fullscreen"></iframe>
+      <iframe src="./option2-async.html" title="Opción 2 Async" loading="lazy" allow="fullscreen"></iframe>
     </div>
   </div>
-  <a class="diagram-open-btn" href="sequence-option2-async.html" target="_blank">
+  <a class="diagram-open-btn" href="./option2-async.html" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
     Abrir secuencia Opción 2 a pantalla completa
   </a>
@@ -519,10 +565,9 @@ a:hover{text-decoration:underline}
 
   </div>
 
-<hr class="section-divider">
-
-<!-- ═══ ARQUITECTURA DIAGRAM ══════════════════════════════════════════════ -->
-<div class="section" id="sec-arquitectura">
+<div id="sec-arquitectura" style="display:none" aria-hidden="true">
+<hr class="section-divider" style="display:none">
+<div class="section">
   <div class="section-label">Arquitectura General</div>
   <div class="section-title">Diagramas de Arquitectura — Opción 1 vs Opción 2</div>
   <p class="section-sub">Vista de alto nivel de cada opción: canales digitales, capa MuleSoft, Salesforce Communications Cloud y sistemas externos. Nota: la pasarela bancaria (domiciliación) es llamada directamente por el canal digital — no pasa por Salesforce.</p>
@@ -540,10 +585,10 @@ a:hover{text-decoration:underline}
       <span class="diagram-badge" style="background:var(--opt1)">Architecture · Opt 1</span>
     </div>
     <div class="diagram-iframe-wrap" style="padding-bottom:65%">
-      <iframe src="architecture-opt1.html" title="Arquitectura Opción 1" loading="lazy" allow="fullscreen"></iframe>
+      <iframe src="./architecture-opt1.html" title="Arquitectura Opción 1" loading="lazy" allow="fullscreen"></iframe>
     </div>
   </div>
-  <a class="diagram-open-btn" href="architecture-opt1.html" target="_blank">
+  <a class="diagram-open-btn" href="./architecture-opt1.html" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
     Abrir arquitectura Opción 1 a pantalla completa
   </a>
@@ -558,10 +603,10 @@ a:hover{text-decoration:underline}
       <span class="diagram-badge" style="background:var(--opt2)">Architecture · Opt 2</span>
     </div>
     <div class="diagram-iframe-wrap" style="padding-bottom:65%">
-      <iframe src="architecture-opt2-v2.html" title="Arquitectura Opción 2" loading="lazy" allow="fullscreen"></iframe>
+      <iframe src="./architecture-opt2.html" title="Arquitectura Opción 2" loading="lazy" allow="fullscreen"></iframe>
     </div>
   </div>
-  <a class="diagram-open-btn" href="architecture-opt2-v2.html" target="_blank">
+  <a class="diagram-open-btn" href="./architecture-opt2.html" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
     Abrir arquitectura Opción 2 a pantalla completa
   </a>
@@ -569,7 +614,7 @@ a:hover{text-decoration:underline}
   <div class="note" style="margin-top:20px">
     <strong>Actores comunes a ambas opciones:</strong> (1) <strong>Canales Digitales</strong> — 100% responsabilidad Telmex per SOW; (2) <strong>MuleSoft</strong> — backbone obligatorio, recibe TMF del canal, traduce internamente; (3) <strong>Salesforce</strong> — fuente del catálogo (DC APIs batch), Core Objects (Lead, Account, Order, Asset); (4) <strong>Sistemas Externos</strong> — GIS, Buró de Crédito, PISA; (5) <strong>Pasarela Bancaria</strong> — responsabilidad canal digital, no Salesforce.
   </div>
-</div>
+</div></div>
 
 <hr class="section-divider">
 
@@ -653,10 +698,10 @@ a:hover{text-decoration:underline}
       <span class="diagram-badge">Sequence · Animado</span>
     </div>
     <div class="diagram-iframe-wrap" style="padding-bottom:62%">
-      <iframe src="sequence-tmf699-lead.html" title="TMF 699 Lead Sequence" loading="lazy" allow="fullscreen"></iframe>
+      <iframe src="./tmf699-lead.html" title="TMF 699 Lead Sequence" loading="lazy" allow="fullscreen"></iframe>
     </div>
   </div>
-  <a class="diagram-open-btn" href="sequence-tmf699-lead.html" target="_blank">
+  <a class="diagram-open-btn" href="./tmf699-lead.html" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
     Abrir secuencia TMF 699 a pantalla completa
   </a>
@@ -675,7 +720,7 @@ a:hover{text-decoration:underline}
 <div class="section" id="sec-live">
   <div class="section-label">Simulación Paso a Paso</div>
   <div class="section-title">En Vivo — ¿Qué ocurre tras escenas en cada paso?</div>
-  <p class="section-sub">Desde que el cliente abre telmex.com hasta que recibe el Folio OS. Las operaciones se ejecutan en <strong>tandas</strong>, no en un solo llamado — algunas son síncronas con el usuario, otras son asíncronas aprovechando momentos de espera natural (como el OTP del 2FA).</p>
+  <p class="section-sub">Desde que el cliente abre telmex.com hasta que recibe el Folio OS. Las operaciones se ejecutan en <strong>tandas</strong>, no en un solo llamado — algunas síncronas, otras asíncronas aprovechando momentos de espera natural (OTP del 2FA). Incluye el módulo interactivo completo con screenshots reales del flujo.</p>
 
   <div class="callout callout-info" style="margin-bottom:24px">
     <div class="callout-icon">⚡</div>
@@ -684,42 +729,155 @@ a:hover{text-decoration:underline}
     </div>
   </div>
 
-  <!-- LIVE OPT 1 -->
-  <div class="step-badge" style="margin-bottom:12px">Opción 1 — En Vivo</div>
-  <div class="diagram-wrap">
+  <!-- INTERACTIVE STEP SIMULATOR -->
+  <div class="diagram-wrap" style="margin-bottom:28px">
     <div class="diagram-header">
-      <span class="diagram-title">En Vivo Opción 1 — SDC + Caché Catálogo + Promo async durante 2FA</span>
-      <span class="diagram-badge" style="background:var(--opt1)">Sequence · En Vivo Opt 1</span>
+      <span class="diagram-title">Simulador Interactivo — 9 pasos · Toggle Opción 1 / Opción 2 · Screenshots reales</span>
+      <span class="diagram-badge" style="background:var(--c2)">Interactive · Paso a Paso</span>
     </div>
-    <div class="diagram-iframe-wrap" style="padding-bottom:60%">
-      <iframe src="sequence-live-opt1.html" title="En Vivo Opción 1" loading="lazy" allow="fullscreen"></iframe>
+    <div style="height:600px;overflow:hidden;border-radius:0 0 var(--radius) var(--radius)">
+      <iframe src="sim-pasos.html" title="Simulador Paso a Paso" style="width:100%;height:100%;border:none;background:var(--s0)" allow="fullscreen"></iframe>
     </div>
   </div>
-  <a class="diagram-open-btn" href="sequence-live-opt1.html" target="_blank">
+  <a class="diagram-open-btn" href="sim-pasos.html" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
-    Abrir diagrama En Vivo Opción 1
+    Abrir simulador a pantalla completa
   </a>
 
-  <hr style="border:none;border-top:1px solid var(--grid);margin:36px 0">
 
-  <!-- LIVE OPT 2 -->
-  <div class="step-badge" style="margin-bottom:12px;background:color-mix(in srgb,var(--opt2) 15%,transparent);color:var(--opt2)">Opción 2 — En Vivo</div>
-  <div class="diagram-wrap">
-    <div class="diagram-header">
-      <span class="diagram-title">En Vivo Opción 2 — Caché Completo + Promos Instantáneas + TMF 622</span>
-      <span class="diagram-badge" style="background:var(--opt2)">Sequence · En Vivo Opt 2</span>
-    </div>
-    <div class="diagram-iframe-wrap" style="padding-bottom:60%">
-      <iframe src="sequence-live-opt2.html" title="En Vivo Opción 2" loading="lazy" allow="fullscreen"></iframe>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══ DISEÑO IMPL TMF620 ════════════════════════════════════════════════ -->
+<div class="section" id="sec-impl-tmf620">
+  <div class="section-label">Diseño de Implementación</div>
+  <div class="section-title">MuleSoft TMF 620 — Diseño de Solución</div>
+  <p class="section-sub">Detalles técnicos del diseño de implementación del caché TMF 620 en MuleSoft. Aplica como fuente de datos del batch 24h para <strong>ambas opciones</strong>. Fuente: <em>Diseño de solución - TMF 620 Draft.docx</em> + <em>MAPEO TMF620 vs SF DC API V4.xlsx</em></p>
+
+  <!-- API Definition -->
+  <div class="callout callout-info" style="margin-bottom:20px">
+    <div class="callout-icon">🔌</div>
+    <div class="callout-body">
+      <strong>API MuleSoft:</strong> <code>tmf-620-papi-v1</code> · Endpoint: <code>GET /api/productOffering</code> · Cache: <strong>Object Store v2</strong> con refresh programado (madrugada) + invalidación manual desde Runtime Manager · Repositorio: <code>tmf-620-papi-v1-impl</code>
     </div>
   </div>
-  <a class="diagram-open-btn" href="sequence-live-opt2.html" target="_blank">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3M9 2h5m0 0v5m0-5L7 10"/></svg>
-    Abrir diagrama En Vivo Opción 2
-  </a>
 
-  <div class="note" style="margin-top:20px">
-    <strong>Diferencia de timing visible:</strong> En Opción 1, las flechas punteadas (async) muestran que SF responde con las reglas promo <em>durante</em> la espera del OTP — el cliente no lo nota. En Opción 2, no hay flecha async a SF porque las reglas ya estaban en caché — la respuesta llega < 50ms sin depender del 2FA timing.
+  <!-- Parámetros -->
+  <h4 style="font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Parámetros del Endpoint (Context Dimensions SF)</h4>
+  <div style="overflow-x:auto;margin-bottom:24px">
+  <table class="cmp-table">
+    <thead><tr><th>Parámetro</th><th>Context Dimension SF</th><th>Valores posibles</th><th>Obligatorio</th></tr></thead>
+    <tbody>
+      <tr><td><code>catalogo</code></td><td>Catálogo lógico</td><td><code>TMX_CAT_PAQUETESINFINITUM</code> (Hogar Internet) · <code>TMX_CAT_PAQUETES</code> (Hogar Tel+Internet) · Negocio Internet · Negocio Tel+Internet</td><td><span class="chip chip-r">Sí</span></td></tr>
+      <tr><td><code>canal</code></td><td><code>DIM_CANAL</code></td><td>WEB · APP · BOT (identifica el canal digital)</td><td><span class="chip chip-r">Sí</span></td></tr>
+      <tr><td><code>tipoAlta</code></td><td><code>DIM_ORDEN_TIPO_DE_ALTA</code></td><td>Alta Nueva · Portabilidad</td><td><span class="chip chip-y">No</span></td></tr>
+      <tr><td><code>tecnologia</code></td><td><code>DIM_ORDEN_TECNOLOGIA</code></td><td>Fibra · Cobre</td><td><span class="chip chip-y">No</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- 5 Steps -->
+  <h4 style="font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Proceso de Ejecución Batch — 5 Pasos</h4>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+
+    <div style="background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 18px;display:flex;gap:14px">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--c1);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+      <div>
+        <div style="font-size:.8125rem;font-weight:700;margin-bottom:4px">Consulta de ofertas del catálogo</div>
+        <div class="code-block" style="margin:0;padding:8px 12px;font-size:.6875rem">GET {{OrgURL}}/services/apexrest/vlocity_cmt/v3/catalogs/&lt;CATALOGO&gt;/offers?context={"DIM_ORDEN_TECNOLOGIA":"Fibra"}</div>
+        <p style="font-size:.75rem;color:var(--ink2);margin-top:6px">Retorna lista de paquetes/productos. Los paquetes compuestos <strong>no incluyen detalle de su estructura interna</strong> en esta llamada. Solo filtra <code>isOrderable = true</code>.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 18px;display:flex;gap:14px">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--c1);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+      <div>
+        <div style="font-size:.8125rem;font-weight:700;margin-bottom:4px">Consulta de detalles via Composite API</div>
+        <div class="code-block" style="margin:0;padding:8px 12px;font-size:.6875rem">POST {{OrgURL}}/services/data/v60.0/composite
+{
+  "allOrNone": true,
+  "compositeRequest": [
+    { "method": "GET", "url": "/services/apexrest/vlocity_cmt/v3/catalogs/{CAT}/offers/{ProductCode1}", "referenceId": "{ProductCode1}" },
+    { "method": "GET", "url": "/services/apexrest/vlocity_cmt/v3/catalogs/{CAT}/offers/{ProductCode2}", "referenceId": "{ProductCode2}" }
+  ]
+}</div>
+        <p style="font-size:.75rem;color:var(--ink2);margin-top:6px">Un request por paquete dentro de un Composite request. Retorna la estructura interna de <code>childProducts</code> y <code>productGroups</code> — jerarquía de productos anidada. Usar <strong>Salesforce Composite Connector</strong> de MuleSoft.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 18px;display:flex;gap:14px">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--c1);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+      <div>
+        <div style="font-size:.8125rem;font-weight:700;margin-bottom:4px">Separar Ofertas y Promociones</div>
+        <p style="font-size:.75rem;color:var(--ink2)">Filtrar por campo <code>offerType</code>: valores posibles <strong>"Product"</strong> y <strong>"Promotion"</strong>. Generar dos variables separadas para procesamiento posterior.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 18px;display:flex;gap:14px">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--c1);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+      <div>
+        <div style="font-size:.8125rem;font-weight:700;margin-bottom:4px">Obtener Promociones — SOQL sobre <code>vlocity_cmt__PriceListEntry__c</code></div>
+        <div class="code-block" style="margin:0;padding:8px 12px;font-size:.6rem;line-height:1.6">SELECT Id,
+  vlocity_cmt__PricingElementId__r.vlocity_cmt__AdjustmentValue__c,
+  vlocity_cmt__DisplayText__c,
+  vlocity_cmt__PricingElementId__r.vlocity_cmt__Amount__c,
+  vlocity_cmt__PricingElementId__r.vlocity_cmt__PricingVariableId__r.vlocity_cmt__AdjustmentMethod__c,
+  vlocity_cmt__PricingElementId__r.vlocity_cmt__PricingVariableId__r.vlocity_cmt__ChargeType__c,
+  vlocity_cmt__PricingElementId__r.vlocity_cmt__PricingVariableId__r.vlocity_cmt__RecurringFrequency__c,
+  vlocity_cmt__PromotionItemId__r.vlocity_cmt__OfferId__r.ProductCode,
+  vlocity_cmt__PromotionItemId__r.vlocity_cmt__ProductId__r.ProductCode,
+  vlocity_cmt__PromotionItemId__r.vlocity_cmt__Quantity__c,
+  vlocity_cmt__PromotionItemId__r.vlocity_cmt__MaxQuantity__c,
+  vlocity_cmt__PromotionItemId__r.vlocity_cmt__MinQuantity__c
+FROM vlocity_cmt__PriceListEntry__c
+WHERE vlocity_cmt__PromotionItemId__r.vlocity_cmt__OfferId__r.ProductCode IN (&lt;lista_paquetes&gt;)
+  AND vlocity_cmt__PromotionItemId__r.vlocity_cmt__ProductId__r.ProductCode IN (&lt;lista_productos&gt;)
+  AND vlocity_cmt__EffectiveFromDate__c &lt;= TODAY
+  AND (vlocity_cmt__EffectiveUntilDate__c = null OR vlocity_cmt__EffectiveUntilDate__c &gt;= TODAY)
+  AND vlocity_cmt__IsActive__c = true</div>
+        <p style="font-size:.75rem;color:var(--ink2);margin-top:6px">Esta SOQL extrae las reglas de promo activas relacionando paquete + producto. Es el origen de la <strong>Promo Matrix</strong> que se cachea en MuleSoft para Opción 2.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--s1);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 18px;display:flex;gap:14px">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--c3);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">5</div>
+      <div>
+        <div style="font-size:.8125rem;font-weight:700;margin-bottom:4px">Armar JSON respuesta TMF 620</div>
+        <p style="font-size:.75rem;color:var(--ink2)">Mapear estructura jerárquica de SF al schema TMF 620. Considerar función de mapeo <strong>recursiva</strong> en DataWeave (estructura <code>bundledProductOffering → childProducts → productGroups</code> es de profundidad variable). Referencia de campos: tabla de mapeo abajo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Field Mapping Table (condensed) -->
+  <h4 style="font-size:.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:12px">Mapeo de Campos TMF 620 → Salesforce DC API (campos clave validados)</h4>
+  <div style="overflow-x:auto;margin-bottom:20px">
+  <table class="cmp-table" style="font-size:.75rem">
+    <thead><tr><th>Sección TMF 620</th><th>Campo TMF 620</th><th>Campo Salesforce</th><th>Ejemplo</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>Raíz</td><td><code>id</code></td><td><code>Product2Id</code></td><td>01tHp00000CwXAnIAN</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>Raíz</td><td><code>code</code></td><td><code>ProductCode</code></td><td>OFF_TMX_INFINITUM_349</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>Raíz</td><td><code>name</code></td><td><code>Name</code></td><td>Paquete 389</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>Raíz</td><td><code>isSellable</code></td><td><code>vlocity_cmt__IsOrderable__c</code></td><td>true</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>Raíz</td><td><code>type</code></td><td><code>vlocity_cmt__Type__c</code></td><td>Plan · Service · None</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>Raíz</td><td><code>family</code></td><td><code>Family</code></td><td>Internet · Voz y Datos · Entretenimiento</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>offeringPrice</td><td><code>price.value</code></td><td><code>Amount__c</code></td><td>349.00</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>offeringPrice</td><td><code>price.unit</code></td><td>Constante MXN</td><td>MXN</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>priceAlteration (promo)</td><td><code>id</code></td><td><code>vlocity_cmt__Code__c</code></td><td>BPOR1</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>priceAlteration</td><td><code>name</code></td><td><code>Name</code></td><td>3 Meses de Servicio sin Costo</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>priceAlteration</td><td><code>priceList</code></td><td><code>vlocity_cmt__PriceListId__c</code></td><td>Residencial - Tel+Internet</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>Internet attrs</td><td><code>ATT_Velocidad_Bajada</code></td><td><code>userValues</code></td><td>80 (MB)</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>Internet attrs</td><td><code>ATT_Velocidad_Subida</code></td><td><code>userValues</code></td><td>80 (MB)</td><td><span class="chip chip-g">✓ Validado</span></td></tr>
+      <tr><td>place (geo)</td><td><code>place.id</code></td><td>—</td><td>En revisión</td><td><span class="chip chip-y">⚠ Pendiente</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <strong>Nota sobre OTTs con precio dinámico (F1 TV, HBO, Disney, etc.):</strong> Estos productos requieren el atributo <code>ATT_Nombre_Producto</code> para determinar el precio via "Configuración del producto". Netflix es un caso especial — sus variantes (2HD, 4UHD, Estándar con Anuncios) funcionan como productos independientes con precio en atributos básicos, hasta que sean migrados al esquema de OTT dinámico.
+    </div>
   </div>
 </div>
 
