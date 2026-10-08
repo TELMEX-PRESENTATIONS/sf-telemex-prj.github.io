@@ -9,9 +9,31 @@ PRES="canales-digitales/2026-10-07-arquitecturas"
 echo "Syncing from $SRC..."
 
 # docs/
-cp "$SRC/docs/arquitectura-canales-digitales.html"  "$PRES/"
 cp "$SRC/docs/catalogo-demo-SDCAPISF.html"          "$PRES/"
 cp "$SRC/docs/catalogo-demo.html"                   "$PRES/"
+
+# arquitectura-canales-digitales.html — requiere fix de rutas:
+# el original apunta a ../.archify/subfolder/archivo.html (válido en telmex-adp)
+# en el portal todos los archivos viven en el mismo directorio → rutas planas
+cp "$SRC/docs/arquitectura-canales-digitales.html" "$PRES/"
+python3 - <<'PYEOF'
+import sys
+f = "canales-digitales/2026-10-07-arquitecturas/arquitectura-canales-digitales.html"
+paths = [
+    ("../.archify/sequence-curp-identity/curp-identity.html",     "sequence-curp-identity.html"),
+    ("../.archify/sequence-option1-sdcapi/option1-sdcapi.html",   "sequence-option1-sdcapi.html"),
+    ("../.archify/sequence-option2-async/option2-async.html",     "sequence-option2-async.html"),
+    ("../.archify/architecture-opt1/architecture-opt1.html",      "architecture-opt1.html"),
+    ("../.archify/architecture-opt2-v2/architecture-opt2.html",   "architecture-opt2-v2.html"),
+    ("../.archify/sequence-tmf699-lead/tmf699-lead.html",         "sequence-tmf699-lead.html"),
+    ("../.archify/sequence-live-opt1/live-opt1.html",             "sequence-live-opt1.html"),
+    ("../.archify/sequence-live-opt2/live-opt2.html",             "sequence-live-opt2.html"),
+]
+with open(f) as fh: html = fh.read()
+for old, new in paths: html = html.replace(old, new)
+with open(f, "w") as fh: fh.write(html)
+print("  ✓ rutas de iframes corregidas en arquitectura-canales-digitales.html")
+PYEOF
 
 # .archify/
 cp "$SRC/.archify/architecture-opt1/architecture-opt1.html"           "$PRES/architecture-opt1.html"
